@@ -4,6 +4,7 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import Header from "@/components/common/header";
 import Footer from "@/components/common/footer";
+import { ClerkProvider } from "@clerk/nextjs";
 
 const inter = Inter({subsets:['latin'],variable:'--font-sans'});
 
@@ -20,12 +21,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn("font-sans", inter.variable)}>
+    <ClerkProvider>
+      <html lang="en" className={cn("font-sans", inter.variable)}>
         <body className={`${outfit.className} antialiased`}>
           <Header />
           {children}
           <Footer />
         </body>
       </html>
+    </ClerkProvider>
   );
 }

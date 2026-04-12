@@ -2,6 +2,8 @@ import { CompassIcon, HomeIcon, Blocks, SparklesIcon } from "lucide-react";
 import Link from "next/link";
 import { Button } from "../ui/button";
 import { Suspense } from "react";
+import { Show, SignInButton, SignUpButton, UserButton } from '@clerk/nextjs'
+
 
 const Logo = () => {
     return (
@@ -41,13 +43,22 @@ export default function Header() {
 
                     <div className="flex items-center gap-3">
                         <Suspense>
-                            <Button>Sign Up</Button>
-                            <Button asChild>
-                                <Link href="/submit">
-                                    <SparklesIcon className="size-4" />
-                                    Submit Project
-                                </Link>
-                            </Button>
+                            <Show when="signed-out">
+                                <SignInButton />
+                                <SignUpButton>
+                                    <Button>Sign Up</Button>
+                                </SignUpButton>
+                            </Show>
+                            <Show when="signed-in">
+                                <Button asChild>
+                                    <Link href="/submit">
+                                        <SparklesIcon className="size-4" />
+                                        Submit Project
+                                    </Link>
+                                </Button>
+
+                                <UserButton />
+                            </Show>
                         </Suspense>
                     </div>
                 </div>
