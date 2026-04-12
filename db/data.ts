@@ -1,0 +1,62 @@
+export const allProducts = [
+    {
+        id: 1,
+        name: "Socially",
+        slug: "socially",
+        tagline: "A full-stack social media platform built with Next.js",
+        description:
+        "A full-stack social media platform built with Next.js App Router, TypeScript, PostgreSQL, and Prisma ORM. Features include Google authentication (Clerk), profile management, follow/unfollow system, media posts, real-time notifications, and secure API routes with JWT.",
+        websiteUrl: "https://socially-orcin.vercel.app/",
+        tags: ["Next.js", "Tailwind CSS", "PostgreSQL", "Prisma", "TypeScript"],
+        createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+        approvedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+        status: "approved" as const,
+        submittedBy: "tahsin005@projects.dev",
+        voteCount: 0,
+    },
+    {
+        id: 2,
+        name: "Smart Inventory & Order Management",
+        slug: "smart-inventory-order-management",
+        tagline: "A full-stack inventory and order management system",
+        description:
+        "A full-stack inventory and order management system designed for efficient tracking of products, categories, stock movements, and customer orders. Built with React for the frontend and Express/Prisma for the backend.",
+        websiteUrl: "https://eap-assesment-task-five.vercel.app/",
+        tags: ["React", "Express", "PostgreSQL", "Prisma"],
+        createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+        approvedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+        status: "approved" as const,
+        submittedBy: "tahsin005@projects.dev",
+        voteCount: 0,
+    },
+    {
+        id: 3,
+        name: "AffPilot",
+        slug: "affpilot",
+        tagline: "AI-powered content automation platform for creators and agencies",
+        description:
+        "AffPilot is an AI-powered content automation platform for creators and agencies. I worked on backend and integrations, implementing Shopify publishing and building a centralized payment system to handle transactions across AffPilot's suite of products.",
+        websiteUrl: "https://affpilot.com/",
+        tags: ["React", "Tailwind CSS", "Django", "PostgreSQL"],
+        createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+        approvedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+        status: "approved" as const,
+        submittedBy: "tahsin005@projects.dev",
+        voteCount: 0,
+    },
+    {
+        id: 4,
+        name: "World Explorer",
+        slug: "world-explorer",
+        tagline: "A modern dashboard built using REST Countries API",
+        description:
+        "A high-performance, modern cartographic dashboard built with React and the REST Countries API. This application provides a comprehensive geographic registry with technical data modules, visual identifiers, and optimized orbital scanning (search).",
+        websiteUrl: "https://country-rest-api-react.vercel.app/",
+        tags: ["React", "Tailwind CSS", "REST Countries API"],
+        createdAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
+        approvedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
+        status: "approved" as const,
+        submittedBy: "tahsin005@projects.dev",
+        voteCount: 0,
+    }
+];
