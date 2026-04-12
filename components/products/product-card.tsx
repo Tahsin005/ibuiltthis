@@ -9,25 +9,17 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { StarIcon } from "lucide-react";
 import VotingButtons from "./voting-buttons";
-
-interface Product {
-    id: number;
-    name: string;
-    slug: string;
-    description: string;
-    tags: string[],
-    voteCount: number;
-}
+import { ProductType } from "@/types";
 
 export default function ProductCard({
     product
 }: {
-    product: Product;
+    product: ProductType;
 }) {
     const hasVoted = false;
     return (
-        <Link href={`/products/${product.slug}`}>
-            <Card className="group card-hover hover:bg-primary-foreground/10 border-solid border-gray-400 min-h-[200px]">
+        <Link href={`/products/${product.slug}`} className="block h-full">
+            <Card className="group card-hover hover:bg-primary-foreground/10 border-solid border-gray-400 flex flex-col h-full">
                 <CardHeader className="flex-1">
                     <div className="flex items-start gap-4">
                         <div className="flex-1 min-w-0">
@@ -52,7 +44,7 @@ export default function ProductCard({
                     </div>
                 </CardHeader>
                 <CardFooter>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                         {product.tags?.map((tag) => (
                             <Badge variant="secondary" key={tag}>
                                 {tag}

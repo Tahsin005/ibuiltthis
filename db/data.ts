@@ -11,7 +11,7 @@ export const allProducts = [
         createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
         approvedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
         status: "approved" as const,
-        submittedBy: "tahsin005@projects.dev",
+        submittedBy: "tahsin.ferdous3546@gmail.com",
         voteCount: 0,
     },
     {
@@ -25,8 +25,8 @@ export const allProducts = [
         tags: ["React", "Express", "PostgreSQL", "Prisma"],
         createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
         approvedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-        status: "approved" as const,
-        submittedBy: "tahsin005@projects.dev",
+        status: "pending" as const,
+        submittedBy: "tahsin.ferdous3546@gmail.com",
         voteCount: 0,
     },
     {
@@ -41,7 +41,7 @@ export const allProducts = [
         createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
         approvedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
         status: "approved" as const,
-        submittedBy: "tahsin005@projects.dev",
+        submittedBy: "tahsin.ferdous3546@gmail.com",
         voteCount: 0,
     },
     {
@@ -53,10 +53,10 @@ export const allProducts = [
         "A high-performance, modern cartographic dashboard built with React and the REST Countries API. This application provides a comprehensive geographic registry with technical data modules, visual identifiers, and optimized orbital scanning (search).",
         websiteUrl: "https://country-rest-api-react.vercel.app/",
         tags: ["React", "Tailwind CSS", "REST Countries API"],
-        createdAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
-        approvedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
+        createdAt: new Date(Date.now() - 9 * 24 * 60 * 60 * 1000),
+        approvedAt: new Date(Date.now() - 9 * 24 * 60 * 60 * 1000),
         status: "approved" as const,
-        submittedBy: "tahsin005@projects.dev",
+        submittedBy: "tahsin.ferdous3546@gmail.com",
         voteCount: 0,
     }
 ];
