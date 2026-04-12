@@ -3,6 +3,8 @@ import Link from "next/link";
 import { Button } from "../ui/button";
 import { Suspense } from "react";
 import { Show, SignInButton, SignUpButton, UserButton } from '@clerk/nextjs'
+import { Skeleton } from "../ui/skeleton";
+
 
 
 const Logo = () => {
@@ -42,7 +44,14 @@ export default function Header() {
                     </nav>
 
                     <div className="flex items-center gap-3">
-                        <Suspense>
+                        <Suspense
+                            fallback={
+                                <div className="flex items-center gap-3">
+                                    <Skeleton className="h-9 w-20" />
+                                    <Skeleton className="h-9 w-28" />
+                                </div>
+                            }
+                        >
                             <Show when="signed-out">
                                 <SignInButton />
                                 <SignUpButton>
