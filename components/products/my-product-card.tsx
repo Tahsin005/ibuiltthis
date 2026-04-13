@@ -7,6 +7,18 @@ import { Card, CardDescription, CardFooter, CardTitle } from "@/components/ui/ca
 import { ExternalLinkIcon, Trash2Icon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { deleteProductAction } from "@/lib/products/product-actions";
+import { toast } from "sonner";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export default function MyProductCard({
     product,
@@ -14,8 +26,9 @@ export default function MyProductCard({
     product: ProductType;
 }) {
     const handleDelete = async () => {
-        if (!confirm(`Delete "${product.name}"?`)) return;
-        await deleteProductAction(product.id);
+        const res = await deleteProductAction(product.id);
+        if (res.success) toast.success(res.message);
+        else toast.error(res.message);
     };
 
     return (
@@ -53,10 +66,28 @@ export default function MyProductCard({
                         Visit
                         </a>
                     </Button>
-                    <Button variant="destructive" size="sm" onClick={handleDelete}>
-                        <Trash2Icon className="size-4" />
-                        Delete
-                    </Button>
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button variant="destructive" size="sm">
+                                <Trash2Icon className="size-4" />
+                                Delete
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Delete {product.name}?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This action cannot be undone. This will permanently delete your product and remove it from our servers.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
+                                    Delete
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
                 </CardFooter>
             </div>
         </Card>

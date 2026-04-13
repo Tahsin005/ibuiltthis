@@ -10,9 +10,9 @@ import { redirect } from "next/navigation";
 export default async function AdminPage() {
     const { userId } = await auth();
 
-    // if (!userId) {
-    //     redirect("/sign-in");
-    // }
+    if (!userId) {
+        redirect("/sign-in");
+    }
 
     const response = await clerkClient();
     const user = await response.users.getUser(userId!);
@@ -20,9 +20,9 @@ export default async function AdminPage() {
     const metadata = user.publicMetadata;
     const isAdmin = metadata?.isAdmin ?? false;
 
-    // if (!isAdmin) {
-    //     redirect("/");
-    // }
+    if (!isAdmin) {
+        redirect("/");
+    }
     const allProducts = await getAllProducts();
     const approvedProducts = allProducts.filter(
         (product) => product.status === "approved"

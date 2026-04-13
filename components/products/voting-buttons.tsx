@@ -5,6 +5,8 @@ import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import { useOptimistic, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { downvoteProductAction, upvoteProductAction } from "@/lib/products/product-actions";
+import { useAuth } from "@clerk/nextjs";
+import { toast } from "sonner";
 
 export default function VotingButtons({
     hasVoted,
@@ -15,6 +17,7 @@ export default function VotingButtons({
     voteCount: number;
     productId: number;
 }) {
+    const { isSignedIn } = useAuth();
     const [optimisticVoteCount, setOptimisticVoteCount] = useOptimistic(
         initialVoteCount,
         (currentCount, change: number) => Math.max(0, currentCount + change)
@@ -23,16 +26,26 @@ export default function VotingButtons({
     const [isPending, startTransition] = useTransition();
 
     const handleUpvote = async () => {
+        if (!isSignedIn) {
+            toast.error("You must be logged in to vote");
+            return;
+        }
         startTransition(async () => {
             setOptimisticVoteCount(1);
-            await upvoteProductAction(productId);
+            const res = await upvoteProductAction(productId);
+            if (!res.success) toast.error(res.message);
         });
     };
 
     const handleDownvote = async () => {
+        if (!isSignedIn) {
+            toast.error("You must be logged in to vote");
+            return;
+        }
         startTransition(async () => {
             setOptimisticVoteCount(-1);
-            await downvoteProductAction(productId);
+            const res = await downvoteProductAction(productId);
+            if (!res.success) toast.error(res.message);
         });
     };
 
@@ -54,7 +67,7 @@ export default function VotingButtons({
                         ? "bg-primary/10 text-primary hover:bg-primary/20"
                         : "hover:bg-primary/10 hover:text-primary"
                 )}
-                disabled={isPending}
+                disabled={isPending || !isSignedIn}
             >
                 <ChevronUpIcon className="size-5" />
             </Button>
@@ -65,7 +78,7 @@ export default function VotingButtons({
                 onClick={handleDownvote}
                 variant="ghost"
                 size="icon-sm"
-                disabled={isPending}
+                disabled={isPending || !isSignedIn}
                 className={cn(
                     "h-8 w-8 text-primary ",
                     hasVoted ? "hover:text-destructive" : "opacity-50 cursor-not-allowed"
@@ -76,3 +89,4 @@ export default function VotingButtons({
         </div>
     );
 }
+

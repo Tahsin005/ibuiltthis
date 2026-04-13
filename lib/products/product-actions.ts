@@ -103,19 +103,19 @@ export const upvoteProductAction = async (productId: number) => {
         if (!orgId) {
             console.log("User not a member of an organization");
             return {
-            success: false,
-            message: "You must be a member of an organization to vote",
-        };
+                success: false,
+                message: "You must be a member of an organization to vote",
+            };
         }
 
         await db
             .update(products)
             .set({
-                voteCount: sql`GREATEST(0, vote_count + 1)`,
+                voteCount: sql`GREATEST(0, ${products.voteCount} + 1)`,
             })
             .where(eq(products.id, productId));
 
-        revalidatePath("/");
+        revalidatePath("/", "layout");
 
         return {
             success: true,
@@ -154,11 +154,11 @@ export const downvoteProductAction = async (productId: number) => {
         await db
             .update(products)
             .set({
-                voteCount: sql`GREATEST(0, vote_count - 1)`,
+                voteCount: sql`GREATEST(0, ${products.voteCount} - 1)`,
             })
             .where(eq(products.id, productId));
 
-        revalidatePath("/");
+        revalidatePath("/", "layout");
 
         return {
             success: true,

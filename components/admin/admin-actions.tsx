@@ -1,6 +1,18 @@
 "use client";
 import { CheckCircleIcon, Trash2Icon, XCircleIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 import { ProductType } from "@/types";
 import {
@@ -17,16 +29,19 @@ export default function AdminActions({
     productId: ProductType["id"];
 }) {
     const handleApprove = async () => {
-        console.log("Approve");
-        await approveProductAction(productId);
+        const res = await approveProductAction(productId);
+        if (res.success) toast.success(res.message);
+        else toast.error(res.message);
     };
     const handleReject = async () => {
-        console.log("Reject");
-        await rejectProductAction(productId);
+        const res = await rejectProductAction(productId);
+        if (res.success) toast.success(res.message);
+        else toast.error(res.message);
     };
     const handleDelete = async () => {
-        if (!confirm("Are you sure you want to delete this product?")) return;
-        await deleteProductAction(productId);
+        const res = await deleteProductAction(productId);
+        if (res.success) toast.success(res.message);
+        else toast.error(res.message);
     };
     return (
         <div className="space-y-2">
@@ -50,14 +65,31 @@ export default function AdminActions({
                     </Button>
                 </div>
             )}
-            <Button
-                variant="outline"
-                className="hover:cursor-pointer"
-                onClick={handleDelete}
-            >
-                <Trash2Icon className="size-4" />
-                Delete
-            </Button>
+            <AlertDialog>
+                <AlertDialogTrigger asChild>
+                    <Button
+                        variant="outline"
+                        className="hover:cursor-pointer"
+                    >
+                        <Trash2Icon className="size-4" />
+                        Delete
+                    </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete this product and all associated data.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
+                            Delete
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

@@ -41,7 +41,9 @@ export default function Header() {
                             <CompassIcon className="size-4" />
                             <span>Explore</span>
                         </Link>
-                        <Suspense fallback={null}>
+                        <Suspense fallback={
+                            null
+                        }>
                             <SignedInNav />
                         </Suspense>
                     </nav>

@@ -16,7 +16,8 @@ import { addProductAction } from "@/lib/products/product-actions";
 import { cn } from "@/lib/utils";
 import { FormState } from "@/types";
 import { Loader2Icon, SparklesIcon } from "lucide-react";
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
+import { toast } from "sonner";
 
 const initialState: FormState = {
     success: false,
@@ -31,6 +32,16 @@ export default function ProductSubmitForm() {
     );
 
     const { errors, message, success } = state;
+
+    useEffect(() => {
+        if (message) {
+            if (success) {
+                toast.success(message);
+            } else {
+                toast.error(message);
+            }
+        }
+    }, [message, success]);
 
     const getFieldErrors = (fieldName: string): string[] => {
         if (!errors) return [];

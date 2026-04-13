@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import Header from "@/components/common/header";
 import Footer from "@/components/common/footer";
 import { ClerkProvider } from "@clerk/nextjs";
+import { Toaster } from "@/components/ui/sonner";
 
 const inter = Inter({subsets:['latin'],variable:'--font-sans'});
 
@@ -26,6 +27,7 @@ export default function RootLayout({
         <body className={`${outfit.className} antialiased`}>
           <Header />
           {children}
+          <Toaster />
           <Footer />
         </body>
       </html>
