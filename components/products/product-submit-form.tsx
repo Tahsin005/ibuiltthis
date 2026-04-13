@@ -135,7 +135,7 @@ export default function ProductSubmitForm() {
                         aria-invalid={hasError("websiteUrl")}
                     />
                     <FieldDescription>
-                        Enter your product's website or landing page
+                        Enter your product&apos;s website or landing page
                     </FieldDescription>
                     <FieldError>
                         {getFieldErrors("websiteUrl").map((err) => (
