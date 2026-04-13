@@ -7,7 +7,20 @@ import { auth, clerkClient } from "@clerk/nextjs/server";
 import { InboxIcon, ShieldIcon } from "lucide-react";
 import { redirect } from "next/navigation";
 
-export default async function AdminPage() {
+import { Suspense } from "react";
+import { Loader2 } from "lucide-react";
+
+export default function AdminPage() {
+    return (
+        <Suspense fallback={
+            <div className="py-20 flex justify-center"><Loader2 className="animate-spin size-8 text-muted-foreground" /></div>
+        }>
+            <AdminPageContent />
+        </Suspense>
+    );
+}
+
+async function AdminPageContent() {
     const { userId } = await auth();
 
     if (!userId) {

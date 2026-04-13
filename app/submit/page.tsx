@@ -4,8 +4,21 @@ import OrgSelector from "@/components/products/org-selector";
 import { SparklesIcon } from "lucide-react";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 
-export default async function SubmitPage() {
+import { Loader2 } from "lucide-react";
+
+export default function SubmitPage() {
+    return (
+        <Suspense fallback={
+            <div className="py-20 flex justify-center"><Loader2 className="animate-spin size-8 text-muted-foreground" /></div>
+        }>
+            <SubmitPageContent />
+        </Suspense>
+    );
+}
+
+async function SubmitPageContent() {
     const { userId, orgId } = await auth();
 
     if (!userId) redirect("/sign-in");
@@ -32,10 +45,14 @@ export default async function SubmitPage() {
                     />
                 </div>
                 <div className="mb-6">
-                    <OrgSelector orgs={orgs} activeOrgId={orgId} />
+                    <Suspense fallback={null}>
+                        <OrgSelector orgs={orgs} activeOrgId={orgId} />
+                    </Suspense>
                 </div>
                 <div className="max-w-full mx-auto">
-                    <ProductSubmitForm />
+                    <Suspense fallback={null}>
+                        <ProductSubmitForm />
+                    </Suspense>
                 </div>
             </div>
         </section>

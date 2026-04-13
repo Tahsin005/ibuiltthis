@@ -44,7 +44,7 @@ export default function TermsOfServicePage() {
                     </section>
 
                     <p className="pt-8 text-sm border-t">
-                        Last updated: {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                        Last updated: April 14, 2026
                     </p>
                 </div>
             </div>

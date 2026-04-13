@@ -27,7 +27,7 @@ export default function Footer() {
             </div>
             
             <div className="wrapper px-4 md:px-12 mt-12 pt-8 border-t border-border/50 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-muted-foreground">
-                <p>&copy; {new Date().getFullYear()} iBuiltThis Inc. All rights reserved.</p>
+                <p>&copy; 2026 iBuiltThis Inc. All rights reserved.</p>
                 <div className="flex gap-4">
                     <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
                     <Link href="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link>
