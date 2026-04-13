@@ -8,6 +8,30 @@ export default clerkMiddleware(async (auth, request) => {
         return NextResponse.next();
     }
 
+    const isMyProducts = request.nextUrl.pathname.startsWith('/my-products');
+    const isAdminRoute = request.nextUrl.pathname.startsWith('/admin');
+    const isSubmitRoute = request.nextUrl.pathname.startsWith('/submit');
+
+    if (isMyProducts || isAdminRoute || isSubmitRoute) {
+        if (!userId) {
+            return NextResponse.redirect(new URL('/sign-in', request.url));
+        }
+
+        if (isAdminRoute) {
+            try {
+                const client = await clerkClient();
+                const user = await client.users.getUser(userId);
+
+                if (!user.publicMetadata.isAdmin) {
+                    return NextResponse.redirect(new URL('/', request.url));
+                }
+            } catch (error) {
+                console.error('Error verifying admin status:', error);
+                return NextResponse.redirect(new URL('/', request.url));
+            }
+        }
+    }
+
     if (userId && !orgId) {
         try {
             const client = await clerkClient();

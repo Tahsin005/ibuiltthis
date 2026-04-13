@@ -2,7 +2,7 @@ import { CompassIcon, HomeIcon, Blocks, SparklesIcon, MenuIcon } from "lucide-re
 import Link from "next/link";
 import { Button } from "../ui/button";
 import { Suspense } from "react";
-import { Show, SignInButton, SignUpButton } from '@clerk/nextjs'
+import { Show } from '@clerk/nextjs'
 import { Skeleton } from "../ui/skeleton";
 import CustomUserButton from "./custom-user-button";
 import SignedInNav from "./signed-in-nav";
@@ -64,10 +64,12 @@ export default function Header() {
                         >
                             <div className="hidden md:flex items-center gap-3">
                                 <Show when="signed-out">
-                                    <SignInButton />
-                                    <SignUpButton>
-                                        <Button>Sign Up</Button>
-                                    </SignUpButton>
+                                    <Button variant="ghost" asChild>
+                                        <Link href="/sign-in">Sign In</Link>
+                                    </Button>
+                                    <Button asChild>
+                                        <Link href="/sign-up">Sign Up</Link>
+                                    </Button>
                                 </Show>
                                 <Show when="signed-in">
                                     <Button asChild>
@@ -127,12 +129,12 @@ function MobileMenu() {
                         <Suspense fallback={<Skeleton className="h-9 w-full" />}>
                             <Show when="signed-out">
                                 <div className="flex flex-col gap-2">
-                                    <SignInButton>
-                                        <Button variant="outline" className="w-full">Sign In</Button>
-                                    </SignInButton>
-                                    <SignUpButton>
-                                        <Button className="w-full">Sign Up</Button>
-                                    </SignUpButton>
+                                    <Button variant="outline" className="w-full" asChild>
+                                        <Link href="/sign-in">Sign In</Link>
+                                    </Button>
+                                    <Button className="w-full" asChild>
+                                        <Link href="/sign-up">Sign Up</Link>
+                                    </Button>
                                 </div>
                             </Show>
                             <Show when="signed-in">
