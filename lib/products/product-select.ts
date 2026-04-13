@@ -24,6 +24,16 @@ export async function getAllApprovedProducts() {
     return productsData;
 }
 
+export async function getAllProducts() {
+    "use cache";
+    const productsData = await db
+        .select()
+        .from(products)
+        .orderBy(desc(products.voteCount));
+
+    return productsData;
+}
+
 export async function getRecentlyLaunchedProducts() {
     await connection();
     const productsData = await getAllApprovedProducts();
