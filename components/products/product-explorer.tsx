@@ -12,9 +12,7 @@ export default function ProductExplorer({
 }: {
     products: ProductType[];
 }) {
-    const [sortBy, setSortBy] = useState<"trending" | "recent" | "newest">(
-        "trending"
-    );
+    const [sortBy, setSortBy] = useState<"trending" | "recent">("trending");
     const [searchQuery, setSearchQuery] = useState("");
 
     const filteredProducts = useMemo(() => {
@@ -35,13 +33,6 @@ export default function ProductExplorer({
                 (a, b) =>
                     new Date(b.createdAt || "").getTime() -
                     new Date(a.createdAt || "").getTime()
-                );
-
-            case "newest":
-                return filtered.sort(
-                    (a, b) =>
-                        new Date(b.createdAt || "").getTime() -
-                        new Date(a.createdAt || "").getTime()
                 );
             default:
                 return filtered;

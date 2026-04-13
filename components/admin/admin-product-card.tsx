@@ -1,8 +1,6 @@
 import { ProductType } from "@/types";
-import { Trash2Icon } from "lucide-react";
 import { Badge } from "../ui/badge";
-import { Button } from "../ui/button";
-import { Card, CardDescription, CardFooter, CardTitle } from "../ui/card";
+import { Card, CardDescription, CardTitle } from "../ui/card";
 import AdminActions from "./admin-actions";
 import { cn } from "@/lib/utils";
 
@@ -64,12 +62,6 @@ export default function AdminProductCard({
                             </p>    
                         </div>
                     </CardDescription>
-                    <CardFooter>
-                        <Button variant="outline">
-                            <Trash2Icon className="size-4" />
-                            Delete
-                        </Button>
-                    </CardFooter>
                 </div>
                 <div className="lg:shrink-0">
                 <AdminActions status={product.status ?? ""} productId={product.id} />

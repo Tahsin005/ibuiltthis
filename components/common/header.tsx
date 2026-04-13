@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { Show, SignInButton, SignUpButton } from '@clerk/nextjs'
 import { Skeleton } from "../ui/skeleton";
 import CustomUserButton from "./custom-user-button";
+import SignedInNav from "./signed-in-nav";
 
 const Logo = () => {
     return (
@@ -40,6 +41,9 @@ export default function Header() {
                             <CompassIcon className="size-4" />
                             <span>Explore</span>
                         </Link>
+                        <Suspense fallback={null}>
+                            <SignedInNav />
+                        </Suspense>
                     </nav>
 
                     <div className="flex items-center gap-3">

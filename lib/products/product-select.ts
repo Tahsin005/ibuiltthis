@@ -15,6 +15,7 @@ export async function getFeaturedProducts() {
 }
 
 export async function getAllApprovedProducts() {
+    "use cache";
     const productsData = await db
         .select()
         .from(products)
@@ -47,7 +48,18 @@ export async function getRecentlyLaunchedProducts() {
     );
 }
 
+export async function getProductsByOrgId(orgId: string) {
+    await connection();
+
+    return db
+        .select()
+        .from(products)
+        .where(eq(products.organizationId, orgId))
+        .orderBy(desc(products.createdAt));
+}
+
 export async function getProductBySlug(slug: string) {
+    "use cache";
     const product = await db
         .select()
         .from(products)

@@ -35,7 +35,7 @@ export const rejectProductAction = async (productId: ProductType["id"]) => {
     try {
         await db
             .update(products)
-            .set({ status: "rejected" })
+            .set({ status: "rejected", approvedAt: null })
             .where(eq(products.id, productId));
 
         revalidatePath("/admin");
@@ -49,6 +49,25 @@ export const rejectProductAction = async (productId: ProductType["id"]) => {
         return {
             success: false,
             message: "Failed to reject product",
+        };
+    }
+};
+
+export const deleteProductAction = async (productId: ProductType["id"]) => {
+    try {
+        await db.delete(products).where(eq(products.id, productId));
+
+        revalidatePath("/admin");
+
+        return {
+            success: true,
+            message: "Product deleted",
+        };
+    } catch (error) {
+        console.error(error);
+        return {
+            success: false,
+            message: "Failed to delete product",
         };
     }
 };

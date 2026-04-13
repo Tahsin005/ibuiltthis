@@ -104,7 +104,7 @@ export const upvoteProductAction = async (productId: number) => {
             console.log("User not a member of an organization");
             return {
             success: false,
-            message: "You must be a member of an organization to submit a product",
+            message: "You must be a member of an organization to vote",
         };
         }
 
@@ -147,7 +147,7 @@ export const downvoteProductAction = async (productId: number) => {
             console.log("User not a member of an organization");
             return {
                 success: false,
-                message: "You must be a member of an organization to submit a product",
+                message: "You must be a member of an organization to vote",
             };
         }
 
@@ -170,6 +170,125 @@ export const downvoteProductAction = async (productId: number) => {
             success: false,
             message: "Failed to downvote product",
             voteCount: 0,
+        };
+    }
+};
+
+export const deleteProductAction = async (productId: number) => {
+    try {
+        const { userId, orgId } = await auth();
+
+        if (!userId || !orgId) {
+            return {
+                success: false,
+                message: "You must be signed in to an organization",
+            };
+        }
+
+        const product = await db
+            .select()
+            .from(products)
+            .where(eq(products.id, productId))
+            .limit(1);
+
+        if (!product[0]) {
+            return { success: false, message: "Product not found" };
+        }
+
+        if (product[0].organizationId !== orgId) {
+            return {
+                success: false,
+                message: "You can only delete your organization's products",
+            };
+        }
+
+        await db.delete(products).where(eq(products.id, productId));
+
+        revalidatePath("/my-products");
+        revalidatePath("/admin");
+
+        return { success: true, message: "Product deleted" };
+    } catch (error) {
+        console.error(error);
+        return { success: false, message: "Failed to delete product" };
+    }
+};
+
+export const editProductAction = async (
+    productId: number,
+    formData: FormData
+) => {
+    try {
+        const { userId, orgId } = await auth();
+
+        if (!userId || !orgId) {
+            return {
+                success: false,
+                message: "You must be signed in to an organization",
+                errors: undefined,
+            };
+        }
+
+        const product = await db
+            .select()
+            .from(products)
+            .where(eq(products.id, productId))
+            .limit(1);
+
+        if (!product[0]) {
+            return { success: false, message: "Product not found", errors: undefined };
+        }
+
+        if (product[0].organizationId !== orgId) {
+            return {
+                success: false,
+                message: "You can only edit your organization's products",
+                errors: undefined,
+            };
+        }
+
+        const rawFormData = Object.fromEntries(formData.entries());
+        const validatedData = productSchema.safeParse(rawFormData);
+
+        if (!validatedData.success) {
+            return {
+                success: false,
+                errors: validatedData.error.flatten().fieldErrors,
+                message: "Invalid data",
+            };
+        }
+
+        const { name, slug, tagline, description, websiteUrl, tags } =
+            validatedData.data;
+        const tagsArray = tags ? tags.filter((tag) => typeof tag === "string") : [];
+
+        await db
+            .update(products)
+            .set({
+                name,
+                slug,
+                tagline,
+                description,
+                websiteUrl,
+                tags: tagsArray,
+                status: "pending",
+            })
+            .where(eq(products.id, productId));
+
+        revalidatePath("/my-products");
+        revalidatePath("/admin");
+
+        return {
+            success: true,
+            message: "Product updated and re-submitted for review",
+            errors: undefined,
+        };
+    } catch (error) {
+        console.error(error);
+        return {
+            success: false,
+            message: "Failed to update product",
+            errors: undefined,
         };
     }
 };

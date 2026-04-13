@@ -1,11 +1,14 @@
 "use client";
 
-import { OrganizationSwitcher, UserButton } from "@clerk/nextjs";
+import { OrganizationSwitcher, UserButton, useUser } from "@clerk/nextjs";
 import { Building2Icon, BuildingIcon } from "lucide-react";
 import { Button } from "../ui/button";
 import Link from "next/link";
 
 export default function CustomUserButton() {
+    const { user } = useUser();
+    const isAdmin = user?.publicMetadata?.isAdmin === true;
+
     return (
         <UserButton>
             <UserButton.UserProfilePage
@@ -27,20 +30,22 @@ export default function CustomUserButton() {
                     />
                 </div>
             </UserButton.UserProfilePage>
-            <UserButton.UserProfilePage
-                label="Admin"
-                labelIcon={<Building2Icon className="size-4" />}
-                url="admin"
-            >
-                <div className="p-4">
-                    <h2 className="pb-4">Admin Panel</h2>
-                    <Link href="/admin" className="w-full justify-start">
-                        <Button size="default" className="w-full justify-start rounded-lg">
-                            Go to Admin Panel
-                        </Button>
-                    </Link>
-                </div>
-            </UserButton.UserProfilePage>
+            {isAdmin && (
+                <UserButton.UserProfilePage
+                    label="Admin"
+                    labelIcon={<Building2Icon className="size-4" />}
+                    url="admin"
+                >
+                    <div className="p-4">
+                        <h2 className="pb-4">Admin Panel</h2>
+                        <Link href="/admin" className="w-full justify-start">
+                            <Button size="default" className="w-full justify-start rounded-lg">
+                                Go to Admin Panel
+                            </Button>
+                        </Link>
+                    </div>
+                </UserButton.UserProfilePage>
+            )}
         </UserButton>
     );
 }
