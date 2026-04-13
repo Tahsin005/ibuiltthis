@@ -67,7 +67,7 @@ export default function VotingButtons({
                         ? "bg-primary/10 text-primary hover:bg-primary/20"
                         : "hover:bg-primary/10 hover:text-primary"
                 )}
-                disabled={isPending || !isSignedIn}
+                disabled={isPending}
             >
                 <ChevronUpIcon className="size-5" />
             </Button>
@@ -78,7 +78,7 @@ export default function VotingButtons({
                 onClick={handleDownvote}
                 variant="ghost"
                 size="icon-sm"
-                disabled={isPending || !isSignedIn}
+                disabled={isPending}
                 className={cn(
                     "h-8 w-8 text-primary ",
                     hasVoted ? "hover:text-destructive" : "opacity-50 cursor-not-allowed"

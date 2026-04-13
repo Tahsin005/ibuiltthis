@@ -2,8 +2,9 @@ import { getProductsByOrgId } from "@/lib/products/product-select";
 import MyProductCard from "@/components/products/my-product-card";
 import SectionHeader from "@/components/common/section-header";
 import EmptyState from "@/components/common/empty-state";
-import { LoaderIcon, PackageIcon } from "lucide-react";
+import { PackageIcon } from "lucide-react";
 import { Suspense } from "react";
+import { MyProductSkeletonList } from "@/components/products/my-product-skeleton";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 
@@ -18,13 +19,7 @@ export default function MyProductsPage() {
                         description="Manage all products submitted by your organization"
                     />
                 </div>
-                <Suspense
-                    fallback={
-                        <div>
-                            <LoaderIcon className="size-8 animate-spin text-primary" />
-                        </div>
-                    }
-                >
+                <Suspense fallback={<MyProductSkeletonList />}>
                     <MyProductsList />
                 </Suspense>
             </div>
