@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import { useOptimistic, useTransition } from "react";
 import { Button } from "@/components/ui/button";
+import { downvoteProductAction, upvoteProductAction } from "@/lib/products/product-actions";
 
 export default function VotingButtons({
     hasVoted,
@@ -21,6 +22,20 @@ export default function VotingButtons({
 
     const [isPending, startTransition] = useTransition();
 
+    const handleUpvote = async () => {
+        startTransition(async () => {
+            setOptimisticVoteCount(1);
+            await upvoteProductAction(productId);
+        });
+    };
+
+    const handleDownvote = async () => {
+        startTransition(async () => {
+            setOptimisticVoteCount(-1);
+            await downvoteProductAction(productId);
+        });
+    };
+
     return (
         <div
             className="flex flex-col items-center gap-1 shrink-0"
@@ -30,6 +45,7 @@ export default function VotingButtons({
             }}
         >
             <Button
+                onClick={handleUpvote}
                 variant="ghost"
                 size="icon-sm"
                 className={cn(
@@ -46,6 +62,7 @@ export default function VotingButtons({
                 {optimisticVoteCount}
             </span>
             <Button
+                onClick={handleDownvote}
                 variant="ghost"
                 size="icon-sm"
                 disabled={isPending}
