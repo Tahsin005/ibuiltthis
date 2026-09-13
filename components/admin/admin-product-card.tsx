@@ -2,6 +2,7 @@ import { ProductType } from "@/types";
 import { Badge } from "../ui/badge";
 import { Card, CardDescription, CardTitle } from "../ui/card";
 import AdminActions from "./admin-actions";
+import ProductLogo from "../products/product-logo";
 import { cn } from "@/lib/utils";
 
 export default function AdminProductCard({
@@ -12,9 +13,17 @@ export default function AdminProductCard({
     return (
         <Card className="border rounded-lg p-6 bg-background hover:shadow-md transition-shadow">
             <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
-                <div className="flex-1 min-w-0 space-y-4">
-                    <CardTitle className="text-xl font-semibold flex justify-between items-center">
-                        {product.name}
+                <div className="flex items-start gap-4 flex-1 min-w-0">
+                    <ProductLogo
+                        name={product.name}
+                        logoUrl={product.logoUrl}
+                        websiteUrl={product.websiteUrl}
+                        size="md"
+                        className="mt-1"
+                    />
+                    <div className="flex-1 min-w-0 space-y-4">
+                        <CardTitle className="text-xl font-semibold flex justify-between items-center">
+                            {product.name}
 
                         <Badge
                             className={cn(
@@ -62,6 +71,7 @@ export default function AdminProductCard({
                             </p>    
                         </div>
                     </CardDescription>
+                    </div>
                 </div>
                 <div className="lg:shrink-0">
                 <AdminActions status={product.status ?? ""} productId={product.id} />

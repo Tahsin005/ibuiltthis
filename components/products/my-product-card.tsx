@@ -7,6 +7,8 @@ import { Card, CardDescription, CardFooter, CardTitle } from "@/components/ui/ca
 import { ExternalLinkIcon, Trash2Icon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { deleteProductAction } from "@/lib/products/product-actions";
+import ProductLogo from "./product-logo";
+import EditProductSheet from "./edit-product-sheet";
 import { toast } from "sonner";
 import {
     AlertDialog,
@@ -34,42 +36,52 @@ export default function MyProductCard({
     return (
         <Card className="border rounded-lg p-6 bg-background hover:shadow-md transition-shadow">
             <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
-                <div className="flex-1 min-w-0 space-y-4">
-                    <div className="flex items-center gap-3">
-                        <CardTitle className="text-lg font-semibold">{product.name}</CardTitle>
-                        <Badge
-                            className={cn(
-                                product.status === "pending" &&
-                                "bg-yellow-600/10 text-yellow-600 border-yellow-600",
-                                product.status === "approved" &&
-                                "bg-green-500/10 text-green-500 border-green-500",
-                                product.status === "rejected" &&
-                                "bg-red-500/10 text-red-500 border-red-500"
-                            )}
-                        >
-                            {product.status}
-                        </Badge>
-                    </div>
-                    <CardDescription>{product.tagline}</CardDescription>
-                    <div className="flex flex-wrap gap-2">
-                        {product.tags?.map((tag) => (
-                            <Badge variant="secondary" key={tag}>
-                                {tag}
+                <div className="flex items-start gap-4 flex-1 min-w-0">
+                    <ProductLogo
+                        name={product.name}
+                        logoUrl={product.logoUrl}
+                        websiteUrl={product.websiteUrl}
+                        size="md"
+                        className="mt-1"
+                    />
+                    <div className="flex-1 min-w-0 space-y-4">
+                        <div className="flex items-center gap-3">
+                            <CardTitle className="text-lg font-semibold">{product.name}</CardTitle>
+                            <Badge
+                                className={cn(
+                                    product.status === "pending" &&
+                                    "bg-yellow-600/10 text-yellow-600 border-yellow-600",
+                                    product.status === "approved" &&
+                                    "bg-green-500/10 text-green-500 border-green-500",
+                                    product.status === "rejected" &&
+                                    "bg-red-500/10 text-red-500 border-red-500"
+                                )}
+                            >
+                                {product.status}
                             </Badge>
-                        ))}
+                        </div>
+                        <CardDescription>{product.tagline}</CardDescription>
+                        <div className="flex flex-wrap gap-2">
+                            {product.tags?.map((tag) => (
+                                <Badge variant="secondary" key={tag}>
+                                    {tag}
+                                </Badge>
+                            ))}
+                        </div>
                     </div>
                 </div>
-                <CardFooter className="flex gap-2 p-0">
+                <CardFooter className="flex flex-wrap items-center gap-2 p-0 lg:shrink-0">
                     <Button variant="outline" size="sm" asChild>
                         <a href={product.websiteUrl ?? "#"} target="_blank" rel="noopener noreferrer">
-                        <ExternalLinkIcon className="size-4" />
-                        Visit
+                            <ExternalLinkIcon className="size-3.5 mr-1" />
+                            Visit
                         </a>
                     </Button>
+                    <EditProductSheet product={product} />
                     <AlertDialog>
                         <AlertDialogTrigger asChild>
                             <Button variant="destructive" size="sm">
-                                <Trash2Icon className="size-4" />
+                                <Trash2Icon className="size-3.5 mr-1" />
                                 Delete
                             </Button>
                         </AlertDialogTrigger>

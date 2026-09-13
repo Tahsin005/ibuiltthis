@@ -24,6 +24,7 @@ export const products = pgTable(
 
     // links & media
     websiteUrl: text("website_url"),
+    logoUrl: text("logo_url"),
     tags: json("tags").$type<string[]>(), // e.g. ["AI", "Productivity"]
 
     // voting
@@ -45,5 +46,26 @@ export const products = pgTable(
     organizationIdx: index("products_organization_idx").on(
       table.organizationId
     ),
+  })
+);
+
+// votes
+export const votes = pgTable(
+  "votes",
+  {
+    id: serial("id").primaryKey(),
+    productId: integer("product_id")
+      .notNull()
+      .references(() => products.id, { onDelete: "cascade" }),
+    userId: varchar("user_id", { length: 255 }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  },
+  (table) => ({
+    userProductIdx: uniqueIndex("votes_user_product_idx").on(
+      table.userId,
+      table.productId
+    ),
+    productIdx: index("votes_product_idx").on(table.productId),
+    userIdx: index("votes_user_idx").on(table.userId),
   })
 );

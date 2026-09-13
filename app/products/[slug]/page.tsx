@@ -1,7 +1,7 @@
 "use cache";
 
-import SectionHeader from "@/components/common/section-header";
 import VotingButtons from "@/components/products/voting-buttons";
+import ProductLogo from "@/components/products/product-logo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,17 +12,21 @@ import {
     ArrowLeftIcon,
     CalendarIcon,
     ExternalLinkIcon,
-    StarIcon,
     UserIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
 export const generateStaticParams = async () => {
-    const products = await getFeaturedProducts();
-    return products.map((product) => ({
-        slug: product.slug.toString(),
-    }));
+    try {
+        const products = await getFeaturedProducts();
+        return products.map((product) => ({
+            slug: product.slug.toString(),
+        }));
+    } catch (err) {
+        console.error("Error generating static params for products:", err);
+        return [];
+    }
 };
 
 export default async function Product({
@@ -52,19 +56,29 @@ export default async function Product({
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
                     <div className="lg:col-span-2 space-y-6">
-                        <div className="flex items-start gap-6">
+                        <div className="flex items-start gap-5">
+                            <ProductLogo
+                                name={name}
+                                logoUrl={product.logoUrl}
+                                websiteUrl={websiteUrl}
+                                size="lg"
+                                className="mt-1"
+                            />
                             <div className="flex-1 min-w-0">
-                                <div className="mb-6">
-                                    <SectionHeader
-                                        title={name}
-                                        icon={StarIcon}
-                                        description={tagline ?? ""}
-                                    />
+                                <div className="mb-4">
+                                    <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mb-2">
+                                        {name}
+                                    </h1>
+                                    {tagline && (
+                                        <p className="text-lg text-muted-foreground">
+                                            {tagline}
+                                        </p>
+                                    )}
                                 </div>
                                 <div className="flex flex-wrap gap-2">
                                     {tags?.map((tag) => (
                                         <Badge key={tag} variant="secondary">
-                                        {tag}
+                                            {tag}
                                         </Badge>
                                     ))}
                                 </div>
