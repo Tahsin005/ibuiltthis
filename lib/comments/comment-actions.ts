@@ -66,7 +66,6 @@ export const addCommentAction = async (productId: number, content: string) => {
             .returning();
 
         revalidatePath(`/products/${product[0].slug}`);
-        revalidatePath("/", "layout");
 
         return {
             success: true,
@@ -139,7 +138,6 @@ export const deleteCommentAction = async (commentId: number) => {
         if (product[0]?.slug) {
             revalidatePath(`/products/${product[0].slug}`);
         }
-        revalidatePath("/", "layout");
 
         return {
             success: true,

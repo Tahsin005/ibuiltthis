@@ -28,12 +28,12 @@ const LiveBadge = () => {
     );
 };
 
-function formatStatNumber(num: number, baselineFallback: number): string {
-    const total = num > 0 ? num : baselineFallback;
+function formatStatNumber(num: number): string {
+    const total = Math.max(0, num);
     if (total >= 1000) {
         return `${(total / 1000).toFixed(1)}K+`;
     }
-    return `${total}+`;
+    return `${total}`;
 }
 
 export default async function HeroSection() {
@@ -42,18 +42,18 @@ export default async function HeroSection() {
     const statsData = [
         {
             icon: RocketIcon,
-            value: formatStatNumber(stats.productsCount, 100),
+            value: formatStatNumber(stats.productsCount),
             label: "Projects Shared",
         },
         {
             icon: FlameIcon,
-            value: formatStatNumber(stats.votesCount, 350),
+            value: formatStatNumber(stats.votesCount),
             label: "Community Upvotes",
             hasBorder: true,
         },
         {
             icon: UsersIcon,
-            value: formatStatNumber(stats.creatorsCount, 50),
+            value: formatStatNumber(stats.creatorsCount),
             label: "Active Creators",
         },
     ];

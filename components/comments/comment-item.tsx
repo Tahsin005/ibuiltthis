@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CommentType } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,19 +27,9 @@ interface CommentItemProps {
     onDeleted?: (commentId: number) => void;
 }
 
-function formatTimeAgo(dateInput: Date | string | null | undefined): string {
+function formatStaticDate(dateInput: Date | string | null | undefined): string {
     if (!dateInput) return "recently";
     const date = typeof dateInput === "string" ? new Date(dateInput) : dateInput;
-    const now = new Date();
-    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-    if (diffInSeconds < 60) return "just now";
-    const diffInMinutes = Math.floor(diffInSeconds / 60);
-    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
-    const diffInHours = Math.floor(diffInMinutes / 60);
-    if (diffInHours < 24) return `${diffInHours}h ago`;
-    const diffInDays = Math.floor(diffInHours / 24);
-    if (diffInDays < 30) return `${diffInDays}d ago`;
     return date.toLocaleDateString();
 }
 
@@ -52,6 +42,31 @@ export default function CommentItem({
 }: CommentItemProps) {
     const [isDeleting, setIsDeleting] = useState(false);
     const [dialogOpen, setDialogOpen] = useState(false);
+    const [timeAgo, setTimeAgo] = useState<string>(() =>
+        formatStaticDate(comment.createdAt)
+    );
+
+    useEffect(() => {
+        if (!comment.createdAt) return;
+        const date =
+            typeof comment.createdAt === "string"
+                ? new Date(comment.createdAt)
+                : comment.createdAt;
+        const now = new Date();
+        const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+        if (diffInSeconds < 60) {
+            setTimeAgo("just now");
+        } else if (diffInSeconds < 3600) {
+            setTimeAgo(`${Math.floor(diffInSeconds / 60)}m ago`);
+        } else if (diffInSeconds < 86400) {
+            setTimeAgo(`${Math.floor(diffInSeconds / 3600)}h ago`);
+        } else if (diffInSeconds < 2592000) {
+            setTimeAgo(`${Math.floor(diffInSeconds / 86400)}d ago`);
+        } else {
+            setTimeAgo(date.toLocaleDateString());
+        }
+    }, [comment.createdAt]);
 
     const isAuthor = currentUserId && comment.userId === currentUserId;
     const canDelete = isAuthor || isAdmin;
@@ -105,7 +120,7 @@ export default function CommentItem({
                             </Badge>
                         )}
                         <span className="text-xs text-muted-foreground">
-                            {formatTimeAgo(comment.createdAt)}
+                            {timeAgo}
                         </span>
                     </div>
 
