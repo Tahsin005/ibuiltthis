@@ -148,7 +148,9 @@ export default function MobileMenu() {
                 </div>
 
                 <div className="p-4 border-t border-border/30 bg-muted/10">
-                    {isLoaded && isSignedIn && user ? (
+                    {!isLoaded ? (
+                        <div className="h-14 rounded-xl bg-muted/20 animate-pulse" />
+                    ) : isSignedIn && user ? (
                         <div className="flex items-center justify-between gap-3 p-2 rounded-xl bg-background/60 border border-border/30">
                             <div className="flex items-center gap-3 min-w-0">
                                 {user.imageUrl ? (

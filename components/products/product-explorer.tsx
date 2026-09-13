@@ -17,22 +17,28 @@ export default function ProductExplorer({
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
-    // Extract unique categories and their product counts
+    // Extract unique categories and their product counts canonicalized by lowercase
     const categories = useMemo(() => {
-        const counts: Record<string, number> = {};
+        const counts: Record<string, { label: string; count: number }> = {};
         for (const product of products) {
             if (product.tags) {
+                const seenInProduct = new Set<string>();
                 for (const tag of product.tags) {
-                    const normalized = tag.trim();
-                    if (normalized) {
-                        counts[normalized] = (counts[normalized] || 0) + 1;
+                    const trimmed = tag.trim();
+                    const key = trimmed.toLowerCase();
+                    if (key && !seenInProduct.has(key)) {
+                        seenInProduct.add(key);
+                        if (!counts[key]) {
+                            counts[key] = { label: trimmed, count: 0 };
+                        }
+                        counts[key].count += 1;
                     }
                 }
             }
         }
         return Object.entries(counts)
-            .sort((a, b) => b[1] - a[1]) // highest frequency first
-            .map(([tag, count]) => ({ tag, count }));
+            .sort((a, b) => b[1].count - a[1].count) // highest frequency first
+            .map(([key, data]) => ({ key, tag: data.label, count: data.count }));
     }, [products]);
 
     const filteredProducts = useMemo(() => {
@@ -138,33 +144,36 @@ export default function ProductExplorer({
                             {products.length}
                         </span>
                     </button>
-                    {categories.map(({ tag, count }) => (
-                        <button
-                            key={tag}
-                            type="button"
-                            onClick={() =>
-                                setSelectedCategory(selectedCategory === tag ? "all" : tag)
-                            }
-                            className={cn(
-                                "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors border shrink-0 cursor-pointer",
-                                selectedCategory === tag
-                                    ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                                    : "bg-background text-muted-foreground border-border hover:bg-muted hover:text-foreground"
-                            )}
-                        >
-                            <span>{tag}</span>
-                            <span
+                    {categories.map(({ key, tag, count }) => {
+                        const isSelected = selectedCategory.toLowerCase() === key;
+                        return (
+                            <button
+                                key={key}
+                                type="button"
+                                onClick={() =>
+                                    setSelectedCategory(isSelected ? "all" : key)
+                                }
                                 className={cn(
-                                    "text-[10px] px-1.5 py-0.2 rounded-full",
-                                    selectedCategory === tag
-                                        ? "bg-primary-foreground/20 text-primary-foreground"
-                                        : "bg-muted text-muted-foreground"
+                                    "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors border shrink-0 cursor-pointer",
+                                    isSelected
+                                        ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                                        : "bg-background text-muted-foreground border-border hover:bg-muted hover:text-foreground"
                                 )}
                             >
-                                {count}
-                            </span>
-                        </button>
-                    ))}
+                                <span>{tag}</span>
+                                <span
+                                    className={cn(
+                                        "text-[10px] px-1.5 py-0.2 rounded-full",
+                                        isSelected
+                                            ? "bg-primary-foreground/20 text-primary-foreground"
+                                            : "bg-muted text-muted-foreground"
+                                    )}
+                                >
+                                    {count}
+                                </span>
+                            </button>
+                        );
+                    })}
                 </div>
             )}
 

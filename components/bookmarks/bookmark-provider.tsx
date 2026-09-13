@@ -25,10 +25,13 @@ export function BookmarkProvider({ children }: { children: React.ReactNode }) {
     const [prevUserId, setPrevUserId] = useState<string | null | undefined>(userId);
     const [bookmarkedSet, setBookmarkedSet] = useState<Set<number>>(new Set());
 
+    const [isInitialized, setIsInitialized] = useState(false);
+
     // Reset bookmarked state immediately during render when the active user changes
     if (userId !== prevUserId) {
         setPrevUserId(userId);
         setBookmarkedSet(new Set());
+        setIsInitialized(false);
     }
 
     useEffect(() => {
@@ -38,19 +41,24 @@ export function BookmarkProvider({ children }: { children: React.ReactNode }) {
         getUserBookmarkedProductIdsAction()
             .then((ids) => {
                 if (isMounted) {
-                    setBookmarkedSet(new Set(ids));
+                    setBookmarkedSet((prev) => {
+                        // If already initialized by user action, preserve latest set
+                        return isInitialized ? prev : new Set(ids);
+                    });
+                    setIsInitialized(true);
                 }
             })
             .catch(() => {
                 if (isMounted) {
                     setBookmarkedSet(new Set());
+                    setIsInitialized(true);
                 }
             });
 
         return () => {
             isMounted = false;
         };
-    }, [isSignedIn, userId]);
+    }, [isSignedIn, userId, isInitialized]);
 
     const isBookmarked = (productId: number) =>
         isSignedIn ? bookmarkedSet.has(productId) : false;
@@ -88,6 +96,17 @@ export function BookmarkProvider({ children }: { children: React.ReactNode }) {
                 toast.error(res.message);
                 return { success: false, isBookmarked: currentlyBookmarked };
             }
+
+            // Apply authoritative server state
+            setBookmarkedSet((prev) => {
+                const updated = new Set(prev);
+                if (res.isBookmarked) {
+                    updated.add(productId);
+                } else {
+                    updated.delete(productId);
+                }
+                return updated;
+            });
 
             if (res.isBookmarked) {
                 toast.success(res.message || "Bookmarked!");

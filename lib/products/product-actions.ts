@@ -7,6 +7,7 @@ import { db } from "@/db";
 import { products, votes } from "@/db/schema";
 import z from "zod";
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { and, eq, sql } from "drizzle-orm";
 import { uploadImageToCloudinary } from "@/lib/cloudinary";
 
@@ -120,54 +121,57 @@ export const upvoteProductAction = async (productId: number) => {
             };
         }
 
-        // Check & delete existing vote atomically
-        const deleted = await db
-            .delete(votes)
-            .where(and(eq(votes.productId, productId), eq(votes.userId, userId)))
-            .returning({ id: votes.id });
+        const result = await db.transaction(async (tx) => {
+            // Check & delete existing vote atomically
+            const deleted = await tx
+                .delete(votes)
+                .where(and(eq(votes.productId, productId), eq(votes.userId, userId)))
+                .returning({ id: votes.id });
 
-        if (deleted.length > 0) {
-            // Was deleted -> Decrement counter
-            await db
-                .update(products)
-                .set({
-                    voteCount: sql`GREATEST(0, ${products.voteCount} - 1)`,
+            if (deleted.length > 0) {
+                // Was deleted -> Decrement counter
+                await tx
+                    .update(products)
+                    .set({
+                        voteCount: sql`GREATEST(0, ${products.voteCount} - 1)`,
+                    })
+                    .where(eq(products.id, productId));
+
+                return {
+                    success: true,
+                    hasVoted: false,
+                    message: "Upvote removed",
+                };
+            }
+
+            // Was not deleted -> Insert vote (guarded with onConflictDoNothing)
+            const inserted = await tx
+                .insert(votes)
+                .values({
+                    productId,
+                    userId,
                 })
-                .where(eq(products.id, productId));
+                .onConflictDoNothing()
+                .returning({ id: votes.id });
 
-            revalidatePath("/explore");
+            if (inserted.length > 0) {
+                await tx
+                    .update(products)
+                    .set({
+                        voteCount: sql`${products.voteCount} + 1`,
+                    })
+                    .where(eq(products.id, productId));
+            }
+
             return {
                 success: true,
-                hasVoted: false,
-                message: "Upvote removed",
+                hasVoted: true,
+                message: "Product upvoted!",
             };
-        }
-
-        // Was not deleted -> Insert vote (guarded with onConflictDoNothing)
-        const inserted = await db
-            .insert(votes)
-            .values({
-                productId,
-                userId,
-            })
-            .onConflictDoNothing()
-            .returning({ id: votes.id });
-
-        if (inserted.length > 0) {
-            await db
-                .update(products)
-                .set({
-                    voteCount: sql`${products.voteCount} + 1`,
-                })
-                .where(eq(products.id, productId));
-        }
+        });
 
         revalidatePath("/explore");
-        return {
-            success: true,
-            hasVoted: true,
-            message: "Product upvoted!",
-        };
+        return result;
     } catch (error) {
         console.error("Error in upvoteProductAction:", error);
         return {
@@ -190,32 +194,36 @@ export const downvoteProductAction = async (productId: number) => {
             };
         }
 
-        const deleted = await db
-            .delete(votes)
-            .where(and(eq(votes.productId, productId), eq(votes.userId, userId)))
-            .returning({ id: votes.id });
+        const result = await db.transaction(async (tx) => {
+            const deleted = await tx
+                .delete(votes)
+                .where(and(eq(votes.productId, productId), eq(votes.userId, userId)))
+                .returning({ id: votes.id });
 
-        if (deleted.length === 0) {
+            if (deleted.length === 0) {
+                return {
+                    success: false,
+                    hasVoted: false,
+                    message: "You haven't upvoted this product yet",
+                };
+            }
+
+            await tx
+                .update(products)
+                .set({
+                    voteCount: sql`GREATEST(0, ${products.voteCount} - 1)`,
+                })
+                .where(eq(products.id, productId));
+
             return {
-                success: false,
+                success: true,
                 hasVoted: false,
-                message: "You haven't upvoted this product yet",
+                message: "Upvote removed",
             };
-        }
-
-        await db
-            .update(products)
-            .set({
-                voteCount: sql`GREATEST(0, ${products.voteCount} - 1)`,
-            })
-            .where(eq(products.id, productId));
+        });
 
         revalidatePath("/explore");
-        return {
-            success: true,
-            hasVoted: false,
-            message: "Upvote removed",
-        };
+        return result;
     } catch (error) {
         console.error("Error in downvoteProductAction:", error);
         return {
@@ -395,12 +403,53 @@ export const editProductAction = async (
 
 export const recordProductClickAction = async (productId: number) => {
     try {
+        if (!productId || typeof productId !== "number" || productId <= 0) {
+            return { success: false };
+        }
+
+        const now = Date.now();
+        const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
+
+        const cookieStore = await cookies();
+        const clickedCookie = cookieStore.get("ibuildthis_clicked_products")?.value;
+
+        // Parse existing entries and prune entries older than 24 hours
+        const clickMap: Record<string, number> = {};
+        if (clickedCookie) {
+            try {
+                const parsed = JSON.parse(clickedCookie);
+                if (typeof parsed === "object" && parsed !== null) {
+                    for (const [id, timestamp] of Object.entries(parsed)) {
+                        if (typeof timestamp === "number" && now - timestamp < TWENTY_FOUR_HOURS_MS) {
+                            clickMap[id] = timestamp;
+                        }
+                    }
+                }
+            } catch {
+                // Ignore malformed cookie and start fresh
+            }
+        }
+
+        const productKey = String(productId);
+        if (clickMap[productKey]) {
+            return { success: true, deduplicated: true };
+        }
+
+        clickMap[productKey] = now;
+
+        cookieStore.set("ibuildthis_clicked_products", JSON.stringify(clickMap), {
+            maxAge: 60 * 60 * 24 * 7, // 7 days cookie lifetime; entries expire individually after 24h
+            httpOnly: true,
+            sameSite: "lax",
+            path: "/",
+        });
+
         await db
             .update(products)
             .set({
                 clickCount: sql`${products.clickCount} + 1`,
             })
-            .where(eq(products.id, productId));
+            .where(and(eq(products.id, productId), eq(products.status, "approved")));
 
         return { success: true };
     } catch (error) {
