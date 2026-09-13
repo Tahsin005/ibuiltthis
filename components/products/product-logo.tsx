@@ -25,8 +25,10 @@ export default function ProductLogo({
     size = "md",
     className,
 }: ProductLogoProps) {
-    const [imgError, setImgError] = useState(false);
-    const [faviconError, setFaviconError] = useState(false);
+    const [failedLogoUrls, setFailedLogoUrls] = useState<Record<string, boolean>>({});
+    const [failedFaviconUrls, setFailedFaviconUrls] = useState<Record<string, boolean>>({});
+
+    const imgError = logoUrl ? !!failedLogoUrls[logoUrl] : false;
 
     // Extract domain for favicon fallback
     let domain: string | null = null;
@@ -41,6 +43,8 @@ export default function ProductLogo({
     const faviconUrl = domain
         ? `https://www.google.com/s2/favicons?domain=${domain}&sz=128`
         : null;
+
+    const faviconError = faviconUrl ? !!failedFaviconUrls[faviconUrl] : false;
 
     const initial = name ? name.charAt(0).toUpperCase() : "?";
 
@@ -59,7 +63,9 @@ export default function ProductLogo({
                     src={logoUrl}
                     alt={`${name} logo`}
                     className="h-full w-full object-contain p-1"
-                    onError={() => setImgError(true)}
+                    onError={() =>
+                        setFailedLogoUrls((prev) => ({ ...prev, [logoUrl]: true }))
+                    }
                 />
             </div>
         );
@@ -80,7 +86,10 @@ export default function ProductLogo({
                     src={faviconUrl}
                     alt={`${name} favicon`}
                     className="h-full w-full object-contain"
-                    onError={() => setFaviconError(true)}
+                    onError={() =>
+                        faviconUrl &&
+                        setFailedFaviconUrls((prev) => ({ ...prev, [faviconUrl]: true }))
+                    }
                 />
             </div>
         );

@@ -120,55 +120,57 @@ export const upvoteProductAction = async (productId: number) => {
             };
         }
 
-        // Check if user has already voted for this product
-        const existingVote = await db
-            .select()
-            .from(votes)
-            .where(and(eq(votes.productId, productId), eq(votes.userId, userId)))
-            .limit(1);
-
-        if (existingVote.length > 0) {
-            // User already voted -> Toggle off (remove vote)
-            await db
+        const result = await db.transaction(async (tx) => {
+            // Check & delete existing vote atomically
+            const deleted = await tx
                 .delete(votes)
-                .where(and(eq(votes.productId, productId), eq(votes.userId, userId)));
+                .where(and(eq(votes.productId, productId), eq(votes.userId, userId)))
+                .returning({ id: votes.id });
 
-            await db
-                .update(products)
-                .set({
-                    voteCount: sql`GREATEST(0, ${products.voteCount} - 1)`,
+            if (deleted.length > 0) {
+                // Was deleted -> Decrement counter
+                await tx
+                    .update(products)
+                    .set({
+                        voteCount: sql`GREATEST(0, ${products.voteCount} - 1)`,
+                    })
+                    .where(eq(products.id, productId));
+
+                return {
+                    success: true,
+                    hasVoted: false,
+                    message: "Upvote removed",
+                };
+            }
+
+            // Was not deleted -> Insert vote (guarded with onConflictDoNothing)
+            const inserted = await tx
+                .insert(votes)
+                .values({
+                    productId,
+                    userId,
                 })
-                .where(eq(products.id, productId));
+                .onConflictDoNothing()
+                .returning({ id: votes.id });
 
-            revalidatePath("/", "layout");
-
-            return {
-                success: true,
-                hasVoted: false,
-                message: "Upvote removed",
-            };
-        } else {
-            // User has not voted -> Insert vote & increment count
-            await db.insert(votes).values({
-                productId,
-                userId,
-            });
-
-            await db
-                .update(products)
-                .set({
-                    voteCount: sql`${products.voteCount} + 1`,
-                })
-                .where(eq(products.id, productId));
-
-            revalidatePath("/", "layout");
+            if (inserted.length > 0) {
+                await tx
+                    .update(products)
+                    .set({
+                        voteCount: sql`${products.voteCount} + 1`,
+                    })
+                    .where(eq(products.id, productId));
+            }
 
             return {
                 success: true,
                 hasVoted: true,
                 message: "Product upvoted!",
             };
-        }
+        });
+
+        revalidatePath("/", "layout");
+        return result;
     } catch (error) {
         console.error("Error in upvoteProductAction:", error);
         return {
@@ -191,40 +193,36 @@ export const downvoteProductAction = async (productId: number) => {
             };
         }
 
-        // Check if user has voted
-        const existingVote = await db
-            .select()
-            .from(votes)
-            .where(and(eq(votes.productId, productId), eq(votes.userId, userId)))
-            .limit(1);
+        const result = await db.transaction(async (tx) => {
+            const deleted = await tx
+                .delete(votes)
+                .where(and(eq(votes.productId, productId), eq(votes.userId, userId)))
+                .returning({ id: votes.id });
 
-        if (existingVote.length === 0) {
+            if (deleted.length === 0) {
+                return {
+                    success: false,
+                    hasVoted: false,
+                    message: "You haven't upvoted this product yet",
+                };
+            }
+
+            await tx
+                .update(products)
+                .set({
+                    voteCount: sql`GREATEST(0, ${products.voteCount} - 1)`,
+                })
+                .where(eq(products.id, productId));
+
             return {
-                success: false,
+                success: true,
                 hasVoted: false,
-                message: "You haven't upvoted this product yet",
+                message: "Upvote removed",
             };
-        }
-
-        // Remove vote
-        await db
-            .delete(votes)
-            .where(and(eq(votes.productId, productId), eq(votes.userId, userId)));
-
-        await db
-            .update(products)
-            .set({
-                voteCount: sql`GREATEST(0, ${products.voteCount} - 1)`,
-            })
-            .where(eq(products.id, productId));
+        });
 
         revalidatePath("/", "layout");
-
-        return {
-            success: true,
-            hasVoted: false,
-            message: "Upvote removed",
-        };
+        return result;
     } catch (error) {
         console.error("Error in downvoteProductAction:", error);
         return {
@@ -351,8 +349,9 @@ export const editProductAction = async (
         const tagsArray = tags ? tags.filter((tag) => typeof tag === "string") : [];
 
         // Upload logo to Cloudinary if file provided
+        const removeLogo = formData.get("removeLogo") === "true";
         const logoFile = formData.get("logoFile");
-        let finalLogoUrl = logoUrl || product[0].logoUrl || null;
+        let finalLogoUrl = removeLogo ? null : (logoUrl || product[0].logoUrl || null);
 
         if (logoFile instanceof File && logoFile.size > 0) {
             try {

@@ -24,23 +24,36 @@ const VoteContext = createContext<VoteContextType>({
 });
 
 export function VoteProvider({ children }: { children: React.ReactNode }) {
-    const { isSignedIn } = useAuth();
+    const { isSignedIn, userId } = useAuth();
+    const [prevUserId, setPrevUserId] = useState<string | null | undefined>(userId);
     const [votedSet, setVotedSet] = useState<Set<number>>(new Set());
 
+    // Reset voted state immediately during render when the active user changes
+    if (userId !== prevUserId) {
+        setPrevUserId(userId);
+        setVotedSet(new Set());
+    }
+
     useEffect(() => {
-        if (!isSignedIn) return;
+        if (!isSignedIn || !userId) return;
 
         let isMounted = true;
-        getUserVotedProductIdsAction().then((ids) => {
-            if (isMounted) {
-                setVotedSet(new Set(ids));
-            }
-        });
+        getUserVotedProductIdsAction()
+            .then((ids) => {
+                if (isMounted) {
+                    setVotedSet(new Set(ids));
+                }
+            })
+            .catch(() => {
+                if (isMounted) {
+                    setVotedSet(new Set());
+                }
+            });
 
         return () => {
             isMounted = false;
         };
-    }, [isSignedIn]);
+    }, [isSignedIn, userId]);
 
     const isVoted = (productId: number) => (isSignedIn ? votedSet.has(productId) : false);
 
