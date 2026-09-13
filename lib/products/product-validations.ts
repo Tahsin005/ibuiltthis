@@ -16,7 +16,13 @@ export const productSchema = z.object({
         .string()
         .max(200, { message: "Tagline must be less than 200 characters" }),
     description: z.string().optional(),
-    websiteUrl: z.string().min(1, { message: "Website URL is required" }),
+    websiteUrl: z
+        .string()
+        .min(1, { message: "Website URL is required" })
+        .url({ message: "Must be a valid URL (e.g. https://example.com)" })
+        .refine((url) => /^https?:\/\//i.test(url), {
+            message: "Website URL must start with http:// or https://",
+        }),
     tags: z
         .string()
         .min(1, { message: "Tags are required" })

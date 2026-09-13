@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { products } from "@/db/schema";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, gte } from "drizzle-orm";
 import { connection } from "next/server";
 
 export async function getFeaturedProducts() {
@@ -9,7 +9,8 @@ export async function getFeaturedProducts() {
         .select()
         .from(products)
         .where(eq(products.status, "approved"))
-        .orderBy(desc(products.voteCount));
+        .orderBy(desc(products.voteCount))
+        .limit(6);
 
     return productsData;
 }
@@ -37,15 +38,22 @@ export async function getAllProducts() {
 
 export async function getRecentlyLaunchedProducts() {
     await connection();
-    const productsData = await getAllApprovedProducts();
     const oneWeekAgo = new Date();
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
-    return productsData.filter(
-        (product) =>
-            product.createdAt &&
-            new Date(product.createdAt.toISOString()) >= oneWeekAgo
-    );
+    const productsData = await db
+        .select()
+        .from(products)
+        .where(
+            and(
+                eq(products.status, "approved"),
+                gte(products.createdAt, oneWeekAgo)
+            )
+        )
+        .orderBy(desc(products.createdAt))
+        .limit(12);
+
+    return productsData;
 }
 
 export async function getProductsByOrgId(orgId: string) {

@@ -1,7 +1,5 @@
-export default function Products() {
-    return (
-        <div>
-            <h1>Products</h1>
-        </div>
-    );
+import { redirect } from "next/navigation";
+
+export default function ProductsPage() {
+    redirect("/explore");
 }

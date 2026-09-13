@@ -31,7 +31,6 @@ export default function Header() {
                         <Logo />
                     </div>
                     
-                    {/* Desktop Navigation */}
                     <nav className="hidden md:flex items-center gap-1">
                         <Link
                             href="/"
@@ -52,7 +51,6 @@ export default function Header() {
                         </Suspense>
                     </nav>
 
-                    {/* Desktop & Mobile Actions */}
                     <div className="flex items-center gap-3">
                         <Suspense
                             fallback={

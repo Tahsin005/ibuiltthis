@@ -29,7 +29,7 @@ export default function TermsOfServicePage() {
                     <section className="space-y-4">
                         <h2 className="text-xl font-semibold text-foreground">3. User Submissions</h2>
                         <p>
-                            Our platform allows you to post, link, store, share and otherwise make available certain information, text, graphics, videos, or other material ("Content"). You are responsible for the Content that you post to the Service, including its legality, reliability, and appropriateness.
+                            Our platform allows you to post, link, store, share and otherwise make available certain information, text, graphics, videos, or other material (&quot;Content&quot;). You are responsible for the Content that you post to the Service, including its legality, reliability, and appropriateness.
                         </p>
                         <p>
                             By posting Content to the Service, you grant us the right and license to use, modify, publicly perform, publicly display, reproduce, and distribute such Content on and through the Service.
