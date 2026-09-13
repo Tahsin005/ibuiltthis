@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { products } from "@/db/schema";
-import { and, desc, eq, gte, or } from "drizzle-orm";
+import { and, desc, eq, gte, or, count, countDistinct, sum } from "drizzle-orm";
 import { connection } from "next/server";
 
 export async function getFeaturedProducts() {
@@ -89,4 +89,35 @@ export async function getProductBySlug(slug: string) {
         .limit(1);
 
     return product?.[0] ?? null;
+}
+
+export async function getPlatformStats() {
+    "use cache";
+    try {
+        const [productStats] = await db
+            .select({
+                totalProducts: count(products.id),
+                totalVotes: sum(products.voteCount),
+                totalCreators: countDistinct(products.userId),
+            })
+            .from(products)
+            .where(eq(products.status, "approved"));
+
+        const productCount = Number(productStats?.totalProducts ?? 0);
+        const voteCount = Number(productStats?.totalVotes ?? 0);
+        const creatorCount = Number(productStats?.totalCreators ?? 0);
+
+        return {
+            productsCount: productCount,
+            votesCount: voteCount,
+            creatorsCount: creatorCount,
+        };
+    } catch (err) {
+        console.error("Error fetching platform stats:", err);
+        return {
+            productsCount: 0,
+            votesCount: 0,
+            creatorsCount: 0,
+        };
+    }
 }
