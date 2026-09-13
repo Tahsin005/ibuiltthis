@@ -4,10 +4,11 @@ import { FormState } from "@/types";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { productSchema } from "./product-validations";
 import { db } from "@/db";
-import { products } from "@/db/schema";
+import { products, votes } from "@/db/schema";
 import z from "zod";
 import { revalidatePath } from "next/cache";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
+import { uploadImageToCloudinary } from "@/lib/cloudinary";
 
 export const addProductAction = async (
     prevState: FormState,
@@ -15,7 +16,6 @@ export const addProductAction = async (
 ) => {
     try {
         const { userId, orgId } = await auth();
-        console.log(userId, orgId);
         if (!userId) {
             return {
                 success: false,
@@ -36,20 +36,36 @@ export const addProductAction = async (
 
         const rawFormData = Object.fromEntries(formData.entries());
 
-        //validate the data
+        // validate the data
         const validatedData = productSchema.safeParse(rawFormData);
 
         if (!validatedData.success) {
-            console.log(validatedData.error.flatten().fieldErrors);
             return {
                 success: false,
                 errors: validatedData.error.flatten().fieldErrors,
-                message: "Invalid data",
+                message: "Invalid data. Please fix the errors below.",
             };
         }
 
-        const { name, slug, tagline, description, websiteUrl, tags } = validatedData.data;
+        const { name, slug, tagline, description, websiteUrl, logoUrl, tags } = validatedData.data;
         const tagsArray = tags ? tags.filter((tag) => typeof tag === "string") : [];
+
+        // Upload logo to Cloudinary if file provided
+        const logoFile = formData.get("logoFile");
+        let finalLogoUrl = logoUrl || null;
+
+        if (logoFile instanceof File && logoFile.size > 0) {
+            try {
+                finalLogoUrl = await uploadImageToCloudinary(logoFile);
+            } catch (err) {
+                console.error("Cloudinary upload error:", err);
+                return {
+                    success: false,
+                    message: "Failed to upload logo image to Cloudinary",
+                    errors: undefined,
+                };
+            }
+        }
 
         // transform the data
         await db.insert(products).values({
@@ -58,6 +74,7 @@ export const addProductAction = async (
             tagline,
             description,
             websiteUrl,
+            logoUrl: finalLogoUrl,
             tags: tagsArray,
             status: "pending",
             submittedBy: userEmail,
@@ -65,13 +82,16 @@ export const addProductAction = async (
             userId,
         });
 
+        revalidatePath("/my-products");
+        revalidatePath("/admin");
+
         return {
             success: true,
             message: "Product submitted successfully! It will be reviewed shortly.",
             errors: undefined,
         };
     } catch (error) {
-        console.log(error);
+        console.error(error);
         if (error instanceof z.ZodError) {
             return {
                 success: false,
@@ -83,73 +103,113 @@ export const addProductAction = async (
         return {
             success: false,
             errors: undefined,
-            message: "Failed to submit product",
+            message: "Failed to submit product. Slug might already be in use.",
         };
     }
-}
+};
 
 export const upvoteProductAction = async (productId: number) => {
     try {
-        const { userId, orgId } = await auth();
+        const { userId } = await auth();
 
         if (!userId) {
-            console.log("User not signed in");
             return {
                 success: false,
-                message: "You must be signed in to submit a product",
+                message: "You must be signed in to vote",
+                hasVoted: false,
             };
         }
 
-        if (!orgId) {
-            console.log("User not a member of an organization");
+        // Check if user has already voted for this product
+        const existingVote = await db
+            .select()
+            .from(votes)
+            .where(and(eq(votes.productId, productId), eq(votes.userId, userId)))
+            .limit(1);
+
+        if (existingVote.length > 0) {
+            // User already voted -> Toggle off (remove vote)
+            await db
+                .delete(votes)
+                .where(and(eq(votes.productId, productId), eq(votes.userId, userId)));
+
+            await db
+                .update(products)
+                .set({
+                    voteCount: sql`GREATEST(0, ${products.voteCount} - 1)`,
+                })
+                .where(eq(products.id, productId));
+
+            revalidatePath("/", "layout");
+
             return {
-                success: false,
-                message: "You must be a member of an organization to vote",
+                success: true,
+                hasVoted: false,
+                message: "Upvote removed",
+            };
+        } else {
+            // User has not voted -> Insert vote & increment count
+            await db.insert(votes).values({
+                productId,
+                userId,
+            });
+
+            await db
+                .update(products)
+                .set({
+                    voteCount: sql`${products.voteCount} + 1`,
+                })
+                .where(eq(products.id, productId));
+
+            revalidatePath("/", "layout");
+
+            return {
+                success: true,
+                hasVoted: true,
+                message: "Product upvoted!",
             };
         }
-
-        await db
-            .update(products)
-            .set({
-                voteCount: sql`GREATEST(0, ${products.voteCount} + 1)`,
-            })
-            .where(eq(products.id, productId));
-
-        revalidatePath("/", "layout");
-
-        return {
-            success: true,
-            message: "Product upvoted successfully",
-        };
     } catch (error) {
-        console.error(error);
+        console.error("Error in upvoteProductAction:", error);
         return {
             success: false,
-            message: "Failed to upvote product",
-            voteCount: 0,
+            message: "Failed to process vote",
+            hasVoted: false,
         };
     }
 };
 
 export const downvoteProductAction = async (productId: number) => {
     try {
-        const { userId, orgId } = await auth();
+        const { userId } = await auth();
 
         if (!userId) {
-            console.log("User not signed in");
             return {
                 success: false,
-                message: "You must be signed in to submit a product",
+                message: "You must be signed in to vote",
+                hasVoted: false,
             };
         }
 
-        if (!orgId) {
-            console.log("User not a member of an organization");
+        // Check if user has voted
+        const existingVote = await db
+            .select()
+            .from(votes)
+            .where(and(eq(votes.productId, productId), eq(votes.userId, userId)))
+            .limit(1);
+
+        if (existingVote.length === 0) {
             return {
                 success: false,
-                message: "You must be a member of an organization to vote",
+                hasVoted: false,
+                message: "You haven't upvoted this product yet",
             };
         }
+
+        // Remove vote
+        await db
+            .delete(votes)
+            .where(and(eq(votes.productId, productId), eq(votes.userId, userId)));
 
         await db
             .update(products)
@@ -162,15 +222,33 @@ export const downvoteProductAction = async (productId: number) => {
 
         return {
             success: true,
-            message: "Product downvoted successfully",
+            hasVoted: false,
+            message: "Upvote removed",
         };
     } catch (error) {
-        console.error(error);
+        console.error("Error in downvoteProductAction:", error);
         return {
             success: false,
-            message: "Failed to downvote product",
-            voteCount: 0,
+            message: "Failed to remove vote",
+            hasVoted: false,
         };
+    }
+};
+
+export const getUserVotedProductIdsAction = async (): Promise<number[]> => {
+    try {
+        const { userId } = await auth();
+        if (!userId) return [];
+
+        const userVotes = await db
+            .select({ productId: votes.productId })
+            .from(votes)
+            .where(eq(votes.userId, userId));
+
+        return userVotes.map((v) => v.productId);
+    } catch (error) {
+        console.error("Error fetching user votes:", error);
+        return [];
     }
 };
 
@@ -178,10 +256,10 @@ export const deleteProductAction = async (productId: number) => {
     try {
         const { userId, orgId } = await auth();
 
-        if (!userId || !orgId) {
+        if (!userId) {
             return {
                 success: false,
-                message: "You must be signed in to an organization",
+                message: "You must be signed in",
             };
         }
 
@@ -195,10 +273,14 @@ export const deleteProductAction = async (productId: number) => {
             return { success: false, message: "Product not found" };
         }
 
-        if (product[0].organizationId !== orgId) {
+        const isOwner =
+            product[0].userId === userId ||
+            (orgId && product[0].organizationId === orgId);
+
+        if (!isOwner) {
             return {
                 success: false,
-                message: "You can only delete your organization's products",
+                message: "You can only delete products you or your organization submitted",
             };
         }
 
@@ -206,6 +288,8 @@ export const deleteProductAction = async (productId: number) => {
 
         revalidatePath("/my-products");
         revalidatePath("/admin");
+        revalidatePath("/explore");
+        revalidatePath("/");
 
         return { success: true, message: "Product deleted" };
     } catch (error) {
@@ -221,10 +305,10 @@ export const editProductAction = async (
     try {
         const { userId, orgId } = await auth();
 
-        if (!userId || !orgId) {
+        if (!userId) {
             return {
                 success: false,
-                message: "You must be signed in to an organization",
+                message: "You must be signed in",
                 errors: undefined,
             };
         }
@@ -239,10 +323,14 @@ export const editProductAction = async (
             return { success: false, message: "Product not found", errors: undefined };
         }
 
-        if (product[0].organizationId !== orgId) {
+        const isOwner =
+            product[0].userId === userId ||
+            (orgId && product[0].organizationId === orgId);
+
+        if (!isOwner) {
             return {
                 success: false,
-                message: "You can only edit your organization's products",
+                message: "You can only edit products you or your organization submitted",
                 errors: undefined,
             };
         }
@@ -254,13 +342,30 @@ export const editProductAction = async (
             return {
                 success: false,
                 errors: validatedData.error.flatten().fieldErrors,
-                message: "Invalid data",
+                message: "Invalid data. Please fix the errors.",
             };
         }
 
-        const { name, slug, tagline, description, websiteUrl, tags } =
+        const { name, slug, tagline, description, websiteUrl, logoUrl, tags } =
             validatedData.data;
         const tagsArray = tags ? tags.filter((tag) => typeof tag === "string") : [];
+
+        // Upload logo to Cloudinary if file provided
+        const logoFile = formData.get("logoFile");
+        let finalLogoUrl = logoUrl || product[0].logoUrl || null;
+
+        if (logoFile instanceof File && logoFile.size > 0) {
+            try {
+                finalLogoUrl = await uploadImageToCloudinary(logoFile);
+            } catch (err) {
+                console.error("Cloudinary upload error:", err);
+                return {
+                    success: false,
+                    message: "Failed to upload logo image to Cloudinary",
+                    errors: undefined,
+                };
+            }
+        }
 
         await db
             .update(products)
@@ -270,6 +375,7 @@ export const editProductAction = async (
                 tagline,
                 description,
                 websiteUrl,
+                logoUrl: finalLogoUrl,
                 tags: tagsArray,
                 status: "pending",
             })
@@ -277,6 +383,8 @@ export const editProductAction = async (
 
         revalidatePath("/my-products");
         revalidatePath("/admin");
+        revalidatePath("/explore");
+        revalidatePath("/");
 
         return {
             success: true,

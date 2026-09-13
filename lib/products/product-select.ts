@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { products } from "@/db/schema";
-import { and, desc, eq, gte } from "drizzle-orm";
+import { and, desc, eq, gte, or } from "drizzle-orm";
 import { connection } from "next/server";
 
 export async function getFeaturedProducts() {
@@ -54,6 +54,20 @@ export async function getRecentlyLaunchedProducts() {
         .limit(12);
 
     return productsData;
+}
+
+export async function getProductsForUser(userId: string, orgId?: string | null) {
+    await connection();
+
+    const condition = orgId
+        ? or(eq(products.organizationId, orgId), eq(products.userId, userId))
+        : eq(products.userId, userId);
+
+    return db
+        .select()
+        .from(products)
+        .where(condition)
+        .orderBy(desc(products.createdAt));
 }
 
 export async function getProductsByOrgId(orgId: string) {

@@ -1,4 +1,4 @@
-import { getProductsByOrgId } from "@/lib/products/product-select";
+import { getProductsForUser } from "@/lib/products/product-select";
 import MyProductCard from "@/components/products/my-product-card";
 import SectionHeader from "@/components/common/section-header";
 import EmptyState from "@/components/common/empty-state";
@@ -16,7 +16,7 @@ export default function MyProductsPage() {
                     <SectionHeader
                         title="My Products"
                         icon={PackageIcon}
-                        description="Manage all products submitted by your organization"
+                        description="Manage all products submitted by you and your organization"
                     />
                 </div>
                 <Suspense fallback={<MyProductSkeletonList />}>
@@ -31,9 +31,8 @@ async function MyProductsList() {
     const { userId, orgId } = await auth();
 
     if (!userId) redirect("/sign-in");
-    if (!orgId) redirect("/org-setup?returnTo=%2Fmy-products");
 
-    const myProducts = await getProductsByOrgId(orgId);
+    const myProducts = await getProductsForUser(userId, orgId);
 
     if (myProducts.length === 0) {
         return (

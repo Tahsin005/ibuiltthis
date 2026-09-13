@@ -2,14 +2,13 @@
 
 import { cn } from "@/lib/utils";
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
-import { useOptimistic, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
-import { downvoteProductAction, upvoteProductAction } from "@/lib/products/product-actions";
 import { useAuth } from "@clerk/nextjs";
 import { toast } from "sonner";
+import { useVotes } from "./vote-provider";
 
 export default function VotingButtons({
-    hasVoted,
     voteCount: initialVoteCount,
     productId,
 }: {
@@ -18,40 +17,62 @@ export default function VotingButtons({
     productId: number;
 }) {
     const { isSignedIn } = useAuth();
-    const [optimisticVoteCount, setOptimisticVoteCount] = useOptimistic(
-        initialVoteCount,
-        (currentCount, change: number) => Math.max(0, currentCount + change)
-    );
+    const { isVoted, toggleVote, removeVote } = useVotes();
+    const hasVoted = isVoted(productId);
 
+    const [voteDelta, setVoteDelta] = useState(0);
     const [isPending, startTransition] = useTransition();
 
-    const handleUpvote = async () => {
+    const displayVoteCount = Math.max(0, initialVoteCount + voteDelta);
+
+    const handleUpvote = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+
         if (!isSignedIn) {
             toast.error("You must be logged in to vote");
             return;
         }
+
+        const willBeVoted = !hasVoted;
+        setVoteDelta((prev) => prev + (willBeVoted ? 1 : -1));
+
         startTransition(async () => {
-            setOptimisticVoteCount(1);
-            const res = await upvoteProductAction(productId);
-            if (!res.success) toast.error(res.message);
+            const res = await toggleVote(productId);
+            if (!res.success) {
+                // Revert local delta if failed
+                setVoteDelta((prev) => prev + (willBeVoted ? -1 : 1));
+            }
         });
     };
 
-    const handleDownvote = async () => {
+    const handleDownvote = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+
         if (!isSignedIn) {
             toast.error("You must be logged in to vote");
             return;
         }
+
+        if (!hasVoted) {
+            toast.info("You haven't upvoted this product yet");
+            return;
+        }
+
+        setVoteDelta((prev) => prev - 1);
+
         startTransition(async () => {
-            setOptimisticVoteCount(-1);
-            const res = await downvoteProductAction(productId);
-            if (!res.success) toast.error(res.message);
+            const res = await removeVote(productId);
+            if (!res.success) {
+                setVoteDelta((prev) => prev + 1);
+            }
         });
     };
 
     return (
         <div
-            className="flex flex-col items-center gap-1 shrink-0"
+            className="flex flex-col items-center gap-1 shrink-0 select-none"
             onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -61,27 +82,36 @@ export default function VotingButtons({
                 onClick={handleUpvote}
                 variant="ghost"
                 size="icon-sm"
+                aria-label={hasVoted ? "Remove upvote" : "Upvote product"}
                 className={cn(
-                    "h-8 w-8 text-primary ",
+                    "h-8 w-8 transition-all duration-200",
                     hasVoted
-                        ? "bg-primary/10 text-primary hover:bg-primary/20"
-                        : "hover:bg-primary/10 hover:text-primary"
+                        ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-xs"
+                        : "text-muted-foreground hover:text-primary hover:bg-primary/10"
                 )}
                 disabled={isPending}
             >
                 <ChevronUpIcon className="size-5" />
             </Button>
-            <span className="text-sm font-semibold transition-colors text-foreground">
-                {optimisticVoteCount}
+            <span
+                className={cn(
+                    "text-sm font-semibold transition-colors",
+                    hasVoted ? "text-primary font-bold" : "text-foreground"
+                )}
+            >
+                {displayVoteCount}
             </span>
             <Button
                 onClick={handleDownvote}
                 variant="ghost"
                 size="icon-sm"
-                disabled={isPending}
+                aria-label="Remove upvote"
+                disabled={isPending || !hasVoted}
                 className={cn(
-                    "h-8 w-8 text-primary ",
-                    hasVoted ? "hover:text-destructive" : "opacity-50 cursor-not-allowed"
+                    "h-8 w-8 transition-all duration-200",
+                    hasVoted
+                        ? "text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                        : "text-muted-foreground/30 opacity-40 cursor-not-allowed hover:bg-transparent"
                 )}
             >
                 <ChevronDownIcon className="size-5" />

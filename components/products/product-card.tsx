@@ -9,6 +9,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { StarIcon } from "lucide-react";
 import VotingButtons from "./voting-buttons";
+import ProductLogo from "./product-logo";
 import { ProductType } from "@/types";
 
 export default function ProductCard({
@@ -16,12 +17,17 @@ export default function ProductCard({
 }: {
     product: ProductType;
 }) {
-    const hasVoted = false;
     return (
         <Link href={`/products/${product.slug}`} className="block h-full">
             <Card className="group card-hover hover:bg-primary-foreground/10 border-solid border-gray-400 flex flex-col h-full">
                 <CardHeader className="flex-1">
                     <div className="flex items-start gap-4">
+                        <ProductLogo
+                            name={product.name}
+                            logoUrl={product.logoUrl}
+                            websiteUrl={product.websiteUrl}
+                            size="md"
+                        />
                         <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
                                 <CardTitle className="text-lg group-hover:text-primary transition-colors">
@@ -34,10 +40,11 @@ export default function ProductCard({
                                     </Badge>
                                 )}
                             </div>
-                            <CardDescription>{product.description}</CardDescription>
+                            <CardDescription className="line-clamp-2 mt-1">
+                                {product.tagline || product.description}
+                            </CardDescription>
                         </div>
                         <VotingButtons
-                            hasVoted={hasVoted}
                             voteCount={product.voteCount}
                             productId={product.id}
                         />

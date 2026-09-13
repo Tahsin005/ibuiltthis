@@ -11,6 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import LogoUpload from "./logo-upload";
 
 import { addProductAction } from "@/lib/products/product-actions";
 import { cn } from "@/lib/utils";
@@ -154,6 +155,8 @@ export default function ProductSubmitForm() {
                         ))}
                     </FieldError>
                 </Field>
+
+                <LogoUpload />
 
                 <Field data-invalid={hasError("tags")}>
                     <FieldLabel htmlFor="tags">Tags</FieldLabel>

@@ -23,6 +23,14 @@ export const productSchema = z.object({
         .refine((url) => /^https?:\/\//i.test(url), {
             message: "Website URL must start with http:// or https://",
         }),
+    logoUrl: z
+        .string()
+        .url({ message: "Logo URL must be a valid URL" })
+        .refine((url) => /^https?:\/\//i.test(url), {
+            message: "Logo URL must start with http:// or https://",
+        })
+        .optional()
+        .or(z.literal("")),
     tags: z
         .string()
         .min(1, { message: "Tags are required" })
