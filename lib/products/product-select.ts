@@ -2,6 +2,7 @@ import { db } from "@/db";
 import { products } from "@/db/schema";
 import { and, desc, eq, gte, or, count, countDistinct, sum } from "drizzle-orm";
 import { connection } from "next/server";
+import { clerkClient } from "@clerk/nextjs/server";
 
 export async function getFeaturedProducts() {
     "use cache";
@@ -120,4 +121,63 @@ export async function getPlatformStats() {
             creatorsCount: 0,
         };
     }
+}
+
+export async function getMakerProfile(userId: string) {
+    await connection();
+
+    const makerProducts = await db
+        .select()
+        .from(products)
+        .where(
+            and(
+                eq(products.userId, userId),
+                eq(products.status, "approved")
+            )
+        )
+        .orderBy(desc(products.voteCount));
+
+    let clerkUser: {
+        id: string;
+        fullName: string | null;
+        username: string | null;
+        imageUrl: string | null;
+        createdAt: number;
+    } | null = null;
+
+    try {
+        const client = await clerkClient();
+        const user = await client.users.getUser(userId);
+        if (user) {
+            clerkUser = {
+                id: user.id,
+                fullName: [user.firstName, user.lastName].filter(Boolean).join(" ") || null,
+                username: user.username || null,
+                imageUrl: user.imageUrl || null,
+                createdAt: user.createdAt,
+            };
+        }
+    } catch (error) {
+        console.warn(`Could not fetch Clerk user profile for ${userId}:`, error);
+    }
+
+    const fallbackName = makerProducts[0]?.submittedBy || "Maker";
+    const displayName = clerkUser?.fullName || clerkUser?.username || fallbackName;
+    const totalLaunches = makerProducts.length;
+    const totalVotes = makerProducts.reduce((acc, p) => acc + (p.voteCount || 0), 0);
+    const totalClicks = makerProducts.reduce((acc, p) => acc + (p.clickCount || 0), 0);
+
+    return {
+        userId,
+        displayName,
+        username: clerkUser?.username,
+        imageUrl: clerkUser?.imageUrl,
+        joinedAt: clerkUser?.createdAt ? new Date(clerkUser.createdAt) : null,
+        stats: {
+            totalLaunches,
+            totalVotes,
+            totalClicks,
+        },
+        products: makerProducts,
+    };
 }

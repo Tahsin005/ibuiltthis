@@ -27,8 +27,9 @@ export const products = pgTable(
     logoUrl: text("logo_url"),
     tags: json("tags").$type<string[]>(), // e.g. ["AI", "Productivity"]
 
-    // voting
+    // voting & engagement
     voteCount: integer("vote_count").notNull().default(0),
+    clickCount: integer("click_count").notNull().default(0),
 
     // metadata
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
@@ -88,5 +89,26 @@ export const comments = pgTable(
     productIdx: index("comments_product_idx").on(table.productId),
     userIdx: index("comments_user_idx").on(table.userId),
     createdAtIdx: index("comments_created_at_idx").on(table.createdAt),
+  })
+);
+
+// bookmarks
+export const bookmarks = pgTable(
+  "bookmarks",
+  {
+    id: serial("id").primaryKey(),
+    productId: integer("product_id")
+      .notNull()
+      .references(() => products.id, { onDelete: "cascade" }),
+    userId: varchar("user_id", { length: 255 }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  },
+  (table) => ({
+    userProductIdx: uniqueIndex("bookmarks_user_product_idx").on(
+      table.userId,
+      table.productId
+    ),
+    productIdx: index("bookmarks_product_idx").on(table.productId),
+    userIdx: index("bookmarks_user_idx").on(table.userId),
   })
 );

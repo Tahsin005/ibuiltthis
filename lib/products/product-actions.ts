@@ -7,6 +7,7 @@ import { db } from "@/db";
 import { products, votes } from "@/db/schema";
 import z from "zod";
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { and, eq, sql } from "drizzle-orm";
 import { uploadImageToCloudinary } from "@/lib/cloudinary";
 
@@ -169,7 +170,7 @@ export const upvoteProductAction = async (productId: number) => {
             };
         });
 
-        revalidatePath("/", "layout");
+        revalidatePath("/explore");
         return result;
     } catch (error) {
         console.error("Error in upvoteProductAction:", error);
@@ -221,7 +222,7 @@ export const downvoteProductAction = async (productId: number) => {
             };
         });
 
-        revalidatePath("/", "layout");
+        revalidatePath("/explore");
         return result;
     } catch (error) {
         console.error("Error in downvoteProductAction:", error);
@@ -397,5 +398,62 @@ export const editProductAction = async (
             message: "Failed to update product",
             errors: undefined,
         };
+    }
+};
+
+export const recordProductClickAction = async (productId: number) => {
+    try {
+        if (!productId || typeof productId !== "number" || productId <= 0) {
+            return { success: false };
+        }
+
+        const now = Date.now();
+        const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
+
+        const cookieStore = await cookies();
+        const clickedCookie = cookieStore.get("ibuildthis_clicked_products")?.value;
+
+        // Parse existing entries and prune entries older than 24 hours
+        const clickMap: Record<string, number> = {};
+        if (clickedCookie) {
+            try {
+                const parsed = JSON.parse(clickedCookie);
+                if (typeof parsed === "object" && parsed !== null) {
+                    for (const [id, timestamp] of Object.entries(parsed)) {
+                        if (typeof timestamp === "number" && now - timestamp < TWENTY_FOUR_HOURS_MS) {
+                            clickMap[id] = timestamp;
+                        }
+                    }
+                }
+            } catch {
+                // Ignore malformed cookie and start fresh
+            }
+        }
+
+        const productKey = String(productId);
+        if (clickMap[productKey]) {
+            return { success: true, deduplicated: true };
+        }
+
+        clickMap[productKey] = now;
+
+        cookieStore.set("ibuildthis_clicked_products", JSON.stringify(clickMap), {
+            maxAge: 60 * 60 * 24 * 7, // 7 days cookie lifetime; entries expire individually after 24h
+            httpOnly: true,
+            sameSite: "lax",
+            path: "/",
+        });
+
+        await db
+            .update(products)
+            .set({
+                clickCount: sql`${products.clickCount} + 1`,
+            })
+            .where(and(eq(products.id, productId), eq(products.status, "approved")));
+
+        return { success: true };
+    } catch (error) {
+        console.error("Error recording product click:", error);
+        return { success: false };
     }
 };

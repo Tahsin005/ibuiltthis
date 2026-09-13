@@ -4,8 +4,9 @@ import VotingButtons from "@/components/products/voting-buttons";
 import ProductLogo from "@/components/products/product-logo";
 import CommentSection from "@/components/comments/comment-section";
 import ShareButton from "@/components/products/share-button";
+import VisitWebsiteButton from "@/components/products/visit-website-button";
+import BookmarkButton from "@/components/bookmarks/bookmark-button";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
     getFeaturedProducts,
     getProductBySlug,
@@ -14,7 +15,6 @@ import { getCommentsByProductId } from "@/lib/comments/comment-select";
 import {
     ArrowLeftIcon,
     CalendarIcon,
-    ExternalLinkIcon,
     Share2Icon,
     UserIcon,
 } from "lucide-react";
@@ -33,7 +33,7 @@ export const generateStaticParams = async () => {
     }
 };
 
-export default async function Product({
+export default async function ProductDetailPage({
     params,
 }: {
     params: Promise<{ slug: string }>;
@@ -100,26 +100,25 @@ export default async function Product({
                             <h2 className="text-lg font-semibold mb-4">Product Details</h2>
 
                             <div className="space-y-3">
-                                {[
-                                {
-                                    label: "Launched:",
-                                    value: new Date(
-                                    product.createdAt?.toISOString() ?? ""
-                                    ).toLocaleDateString(),
-                                    icon: CalendarIcon,
-                                },
-                                {
-                                    label: "Submitted by:",
-                                    value: product.submittedBy,
-                                    icon: UserIcon,
-                                },
-                                ].map(({ label, value, icon: Icon }) => (
-                                    <div key={label} className="flex items-center gap-3 text-sm">
-                                        {Icon && <Icon className="size-4 text-muted-foreground" />}
-                                        <span className="text-muted-foreground">{label}</span>
-                                        <span className="font-medium">{value}</span>
+                                {product.createdAt && (
+                                    <div className="flex items-center gap-3 text-sm">
+                                        <CalendarIcon className="size-4 text-muted-foreground" />
+                                        <span className="text-muted-foreground">Launched:</span>
+                                        <span className="font-medium">
+                                            {new Date(product.createdAt).toLocaleDateString()}
+                                        </span>
                                     </div>
-                                ))}
+                                )}
+                                <div className="flex items-center gap-3 text-sm">
+                                    <UserIcon className="size-4 text-muted-foreground" />
+                                    <span className="text-muted-foreground">Submitted by:</span>
+                                    <Link
+                                        href={`/makers/${product.userId}`}
+                                        className="font-medium text-primary hover:underline underline-offset-4 transition-colors"
+                                    >
+                                        {product.submittedBy}
+                                    </Link>
+                                </div>
                             </div>
                         </div>
 
@@ -138,8 +137,16 @@ export default async function Product({
                                     </p>
                                     <VotingButtons productId={product.id} voteCount={voteCount} />
                                 </div>
+                                <div className="pt-4 border-t">
+                                    <BookmarkButton
+                                        productId={product.id}
+                                        variant="default"
+                                        showLabel
+                                        className="w-full justify-center"
+                                    />
+                                </div>
                                 {voteCount > 100 && (
-                                    <div className="pt-6 border-t">
+                                    <div className="pt-4 border-t">
                                         <Badge className="w-full justify-center py-2">
                                             🔥 Featured Product
                                         </Badge>
@@ -147,19 +154,11 @@ export default async function Product({
                                 )}
                             </div>
                             {websiteUrl && (
-                                <Button
-                                    asChild
+                                <VisitWebsiteButton
+                                    productId={product.id}
+                                    websiteUrl={websiteUrl}
                                     className="w-full rounded-lg"
-                                    variant={"outline"}
-                                >
-                                    <a
-                                        href={websiteUrl}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                    >
-                                        Visit Website <ExternalLinkIcon className="size-4 ml-2" />
-                                    </a>
-                                </Button>
+                                />
                             )}
 
                             <div className="border rounded-lg p-5 bg-background shadow-xs space-y-3">
