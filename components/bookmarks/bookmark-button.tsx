@@ -64,10 +64,12 @@ export default function BookmarkButton({
         );
     }
 
+    const buttonVariant = variant;
+
     return (
         <Button
             type="button"
-            variant={bookmarked ? "secondary" : "outline"}
+            variant={bookmarked ? "secondary" : buttonVariant}
             size={size || "default"}
             onClick={handleClick}
             disabled={isPending}

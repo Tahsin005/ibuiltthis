@@ -100,13 +100,15 @@ export default async function ProductDetailPage({
                             <h2 className="text-lg font-semibold mb-4">Product Details</h2>
 
                             <div className="space-y-3">
-                                <div className="flex items-center gap-3 text-sm">
-                                    <CalendarIcon className="size-4 text-muted-foreground" />
-                                    <span className="text-muted-foreground">Launched:</span>
-                                    <span className="font-medium">
-                                        {new Date(product.createdAt?.toISOString() ?? "").toLocaleDateString()}
-                                    </span>
-                                </div>
+                                {product.createdAt && (
+                                    <div className="flex items-center gap-3 text-sm">
+                                        <CalendarIcon className="size-4 text-muted-foreground" />
+                                        <span className="text-muted-foreground">Launched:</span>
+                                        <span className="font-medium">
+                                            {new Date(product.createdAt).toLocaleDateString()}
+                                        </span>
+                                    </div>
+                                )}
                                 <div className="flex items-center gap-3 text-sm">
                                     <UserIcon className="size-4 text-muted-foreground" />
                                     <span className="text-muted-foreground">Submitted by:</span>
