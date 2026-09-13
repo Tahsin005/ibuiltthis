@@ -2,16 +2,20 @@
 
 import VotingButtons from "@/components/products/voting-buttons";
 import ProductLogo from "@/components/products/product-logo";
+import CommentSection from "@/components/comments/comment-section";
+import ShareButton from "@/components/products/share-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
     getFeaturedProducts,
     getProductBySlug,
 } from "@/lib/products/product-select";
+import { getCommentsByProductId } from "@/lib/comments/comment-select";
 import {
     ArrowLeftIcon,
     CalendarIcon,
     ExternalLinkIcon,
+    Share2Icon,
     UserIcon,
 } from "lucide-react";
 import Link from "next/link";
@@ -43,6 +47,7 @@ export default async function Product({
     }
 
     const { name, description, websiteUrl, tags, voteCount, tagline } = product;
+    const comments = await getCommentsByProductId(product.id);
 
     return (
         <div className="py-16">
@@ -55,7 +60,7 @@ export default async function Product({
                 </Link>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
-                    <div className="lg:col-span-2 space-y-6">
+                    <div className="lg:col-span-2 space-y-8">
                         <div className="flex items-start gap-5">
                             <ProductLogo
                                 name={name}
@@ -117,10 +122,16 @@ export default async function Product({
                                 ))}
                             </div>
                         </div>
+
+                        <CommentSection
+                            productId={product.id}
+                            productAuthorUserId={product.userId}
+                            initialComments={comments}
+                        />
                     </div>
                     <div className="lg:col-span-1">
                         <div className="sticky top-24 space-y-4">
-                            <div className="border rounded-lg p-6 bg-background">
+                            <div className="border rounded-lg p-6 bg-background shadow-xs">
                                 <div className="text-center mb-6">
                                     <p className="text-sm text-muted-foreground mb-2">
                                         Support this product
@@ -150,6 +161,17 @@ export default async function Product({
                                     </a>
                                 </Button>
                             )}
+
+                            <div className="border rounded-lg p-5 bg-background shadow-xs space-y-3">
+                                <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                                    <Share2Icon className="size-4 text-primary" />
+                                    <span>Share Project</span>
+                                </div>
+                                <ShareButton
+                                    productName={name}
+                                    productTagline={tagline}
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>

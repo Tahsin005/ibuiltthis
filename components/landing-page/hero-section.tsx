@@ -2,13 +2,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
     ArrowRightIcon,
-    EyeIcon,
+    FlameIcon,
     RocketIcon,
     SparklesIcon,
     UsersIcon,
 } from "lucide-react";
 import Link from "next/link";
 import StatsCard from "./stats-card";
+import { getPlatformStats } from "@/lib/products/product-select";
 
 const LiveBadge = () => {
     return (
@@ -27,26 +28,35 @@ const LiveBadge = () => {
     );
 };
 
-const statsData = [
-    {
-        icon: RocketIcon,
-        value: "2.5K+",
-        label: "Projects Shared",
-    },
-    {
-        icon: UsersIcon,
-        value: "10K+",
-        label: "Active Creators",
-        hasBorder: true,
-    },
-    {
-        icon: EyeIcon,
-        value: "50K+",
-        label: "Monthly Visitors",
-    },
-];
+function formatStatNumber(num: number): string {
+    const total = Math.max(0, num);
+    if (total >= 1000) {
+        return `${(total / 1000).toFixed(1)}K+`;
+    }
+    return `${total}`;
+}
 
-export default function HeroSection() {
+export default async function HeroSection() {
+    const stats = await getPlatformStats();
+
+    const statsData = [
+        {
+            icon: RocketIcon,
+            value: formatStatNumber(stats.productsCount),
+            label: "Projects Shared",
+        },
+        {
+            icon: FlameIcon,
+            value: formatStatNumber(stats.votesCount),
+            label: "Community Upvotes",
+            hasBorder: true,
+        },
+        {
+            icon: UsersIcon,
+            value: formatStatNumber(stats.creatorsCount),
+            label: "Active Creators",
+        },
+    ];
     return (
         <section className="relative overflow-hidden bg-linear-to-b from-background via-background to-muted/20">
             <div className="wrapper">

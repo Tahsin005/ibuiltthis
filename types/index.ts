@@ -1,5 +1,5 @@
 import { InferSelectModel } from "drizzle-orm";
-import { products, votes } from "@/db/schema";
+import { products, votes, comments } from "@/db/schema";
 
 export type FormState = {
     success: boolean;
@@ -9,4 +9,5 @@ export type FormState = {
 
 export type ProductType = InferSelectModel<typeof products>;
 export type VoteType = InferSelectModel<typeof votes>;
+export type CommentType = InferSelectModel<typeof comments>;
 

@@ -69,3 +69,24 @@ export const votes = pgTable(
     userIdx: index("votes_user_idx").on(table.userId),
   })
 );
+
+// comments
+export const comments = pgTable(
+  "comments",
+  {
+    id: serial("id").primaryKey(),
+    productId: integer("product_id")
+      .notNull()
+      .references(() => products.id, { onDelete: "cascade" }),
+    userId: varchar("user_id", { length: 255 }).notNull(),
+    userName: varchar("user_name", { length: 120 }).default("Anonymous"),
+    userAvatar: text("user_avatar"),
+    content: text("content").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  },
+  (table) => ({
+    productIdx: index("comments_product_idx").on(table.productId),
+    userIdx: index("comments_user_idx").on(table.userId),
+    createdAtIdx: index("comments_created_at_idx").on(table.createdAt),
+  })
+);
