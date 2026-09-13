@@ -4,7 +4,7 @@ import { ProductType } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardFooter, CardTitle } from "@/components/ui/card";
-import { ExternalLinkIcon, Trash2Icon } from "lucide-react";
+import { ExternalLinkIcon, Trash2Icon, FlameIcon, MousePointerClickIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { deleteProductAction } from "@/lib/products/product-actions";
 import ProductLogo from "./product-logo";
@@ -67,6 +67,16 @@ export default function MyProductCard({
                                     {tag}
                                 </Badge>
                             ))}
+                        </div>
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground pt-1">
+                            <span className="inline-flex items-center gap-1 font-medium text-foreground">
+                                <FlameIcon className="size-3.5 text-primary" />
+                                {product.voteCount} {product.voteCount === 1 ? "Upvote" : "Upvotes"}
+                            </span>
+                            <span className="inline-flex items-center gap-1 font-medium text-foreground">
+                                <MousePointerClickIcon className="size-3.5 text-primary" />
+                                {product.clickCount ?? 0} {product.clickCount === 1 ? "Click" : "Clicks"}
+                            </span>
                         </div>
                     </div>
                 </div>

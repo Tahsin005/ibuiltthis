@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useAuth } from "@clerk/nextjs";
+import { BookmarkIcon, PackageIcon } from "lucide-react";
 
 export default function SignedInNav() {
   const { isLoaded, isSignedIn } = useAuth();
@@ -21,9 +22,17 @@ export default function SignedInNav() {
     <>
       <Link
         href="/my-products"
-        className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors hover:bg-muted/50"
+        className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors hover:bg-muted/50 rounded-md"
       >
+        <PackageIcon className="size-4" />
         <span>My Products</span>
+      </Link>
+      <Link
+        href="/bookmarks"
+        className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors hover:bg-muted/50 rounded-md"
+      >
+        <BookmarkIcon className="size-4" />
+        <span>Bookmarks</span>
       </Link>
     </>
   );

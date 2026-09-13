@@ -7,6 +7,7 @@ import Footer from "@/components/common/footer";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "@/components/ui/sonner";
 import { VoteProvider } from "@/components/products/vote-provider";
+import { BookmarkProvider } from "@/components/bookmarks/bookmark-provider";
 
 const inter = Inter({subsets:['latin'],variable:'--font-sans'});
 
@@ -27,10 +28,12 @@ export default function RootLayout({
       <html lang="en" className={cn("font-sans", inter.variable)}>
         <body className={`${outfit.className} antialiased`}>
           <VoteProvider>
-            <Header />
-            {children}
-            <Toaster />
-            <Footer />
+            <BookmarkProvider>
+              <Header />
+              {children}
+              <Toaster />
+              <Footer />
+            </BookmarkProvider>
           </VoteProvider>
         </body>
       </html>

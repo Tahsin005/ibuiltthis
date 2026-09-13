@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { StarIcon } from "lucide-react";
 import VotingButtons from "./voting-buttons";
 import ProductLogo from "./product-logo";
+import BookmarkButton from "@/components/bookmarks/bookmark-button";
 import { ProductType } from "@/types";
 
 export default function ProductCard({
@@ -50,14 +51,19 @@ export default function ProductCard({
                         />
                     </div>
                 </CardHeader>
-                <CardFooter>
-                    <div className="flex flex-wrap items-center gap-2">
+                <CardFooter className="flex items-center justify-between gap-2 pt-0">
+                    <div className="flex flex-wrap items-center gap-1.5 flex-1 min-w-0">
                         {product.tags?.map((tag) => (
                             <Badge variant="secondary" key={tag}>
                                 {tag}
                             </Badge>
                         ))}
                     </div>
+                    <BookmarkButton
+                        productId={product.id}
+                        variant="icon"
+                        className="shrink-0 text-muted-foreground"
+                    />
                 </CardFooter>
             </Card>
         </Link>

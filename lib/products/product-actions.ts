@@ -120,57 +120,54 @@ export const upvoteProductAction = async (productId: number) => {
             };
         }
 
-        const result = await db.transaction(async (tx) => {
-            // Check & delete existing vote atomically
-            const deleted = await tx
-                .delete(votes)
-                .where(and(eq(votes.productId, productId), eq(votes.userId, userId)))
-                .returning({ id: votes.id });
+        // Check & delete existing vote atomically
+        const deleted = await db
+            .delete(votes)
+            .where(and(eq(votes.productId, productId), eq(votes.userId, userId)))
+            .returning({ id: votes.id });
 
-            if (deleted.length > 0) {
-                // Was deleted -> Decrement counter
-                await tx
-                    .update(products)
-                    .set({
-                        voteCount: sql`GREATEST(0, ${products.voteCount} - 1)`,
-                    })
-                    .where(eq(products.id, productId));
-
-                return {
-                    success: true,
-                    hasVoted: false,
-                    message: "Upvote removed",
-                };
-            }
-
-            // Was not deleted -> Insert vote (guarded with onConflictDoNothing)
-            const inserted = await tx
-                .insert(votes)
-                .values({
-                    productId,
-                    userId,
+        if (deleted.length > 0) {
+            // Was deleted -> Decrement counter
+            await db
+                .update(products)
+                .set({
+                    voteCount: sql`GREATEST(0, ${products.voteCount} - 1)`,
                 })
-                .onConflictDoNothing()
-                .returning({ id: votes.id });
+                .where(eq(products.id, productId));
 
-            if (inserted.length > 0) {
-                await tx
-                    .update(products)
-                    .set({
-                        voteCount: sql`${products.voteCount} + 1`,
-                    })
-                    .where(eq(products.id, productId));
-            }
-
+            revalidatePath("/explore");
             return {
                 success: true,
-                hasVoted: true,
-                message: "Product upvoted!",
+                hasVoted: false,
+                message: "Upvote removed",
             };
-        });
+        }
 
-        revalidatePath("/", "layout");
-        return result;
+        // Was not deleted -> Insert vote (guarded with onConflictDoNothing)
+        const inserted = await db
+            .insert(votes)
+            .values({
+                productId,
+                userId,
+            })
+            .onConflictDoNothing()
+            .returning({ id: votes.id });
+
+        if (inserted.length > 0) {
+            await db
+                .update(products)
+                .set({
+                    voteCount: sql`${products.voteCount} + 1`,
+                })
+                .where(eq(products.id, productId));
+        }
+
+        revalidatePath("/explore");
+        return {
+            success: true,
+            hasVoted: true,
+            message: "Product upvoted!",
+        };
     } catch (error) {
         console.error("Error in upvoteProductAction:", error);
         return {
@@ -193,36 +190,32 @@ export const downvoteProductAction = async (productId: number) => {
             };
         }
 
-        const result = await db.transaction(async (tx) => {
-            const deleted = await tx
-                .delete(votes)
-                .where(and(eq(votes.productId, productId), eq(votes.userId, userId)))
-                .returning({ id: votes.id });
+        const deleted = await db
+            .delete(votes)
+            .where(and(eq(votes.productId, productId), eq(votes.userId, userId)))
+            .returning({ id: votes.id });
 
-            if (deleted.length === 0) {
-                return {
-                    success: false,
-                    hasVoted: false,
-                    message: "You haven't upvoted this product yet",
-                };
-            }
-
-            await tx
-                .update(products)
-                .set({
-                    voteCount: sql`GREATEST(0, ${products.voteCount} - 1)`,
-                })
-                .where(eq(products.id, productId));
-
+        if (deleted.length === 0) {
             return {
-                success: true,
+                success: false,
                 hasVoted: false,
-                message: "Upvote removed",
+                message: "You haven't upvoted this product yet",
             };
-        });
+        }
 
-        revalidatePath("/", "layout");
-        return result;
+        await db
+            .update(products)
+            .set({
+                voteCount: sql`GREATEST(0, ${products.voteCount} - 1)`,
+            })
+            .where(eq(products.id, productId));
+
+        revalidatePath("/explore");
+        return {
+            success: true,
+            hasVoted: false,
+            message: "Upvote removed",
+        };
     } catch (error) {
         console.error("Error in downvoteProductAction:", error);
         return {
@@ -397,5 +390,21 @@ export const editProductAction = async (
             message: "Failed to update product",
             errors: undefined,
         };
+    }
+};
+
+export const recordProductClickAction = async (productId: number) => {
+    try {
+        await db
+            .update(products)
+            .set({
+                clickCount: sql`${products.clickCount} + 1`,
+            })
+            .where(eq(products.id, productId));
+
+        return { success: true };
+    } catch (error) {
+        console.error("Error recording product click:", error);
+        return { success: false };
     }
 };
