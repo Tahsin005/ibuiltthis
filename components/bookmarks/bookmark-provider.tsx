@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useRef, useState } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import {
     getUserBookmarkedProductIdsAction,
@@ -24,19 +24,14 @@ export function BookmarkProvider({ children }: { children: React.ReactNode }) {
     const { isSignedIn, userId } = useAuth();
     const [prevUserId, setPrevUserId] = useState<string | null | undefined>(userId);
     const [bookmarkedSet, setBookmarkedSet] = useState<Set<number>>(new Set());
-    const loadedUserIdRef = useRef<string | null>(null);
-
     // Reset bookmarked state immediately during render when the active user changes
     if (userId !== prevUserId) {
         setPrevUserId(userId);
         setBookmarkedSet(new Set());
-        loadedUserIdRef.current = null;
     }
 
     useEffect(() => {
         if (!isSignedIn || !userId) return;
-        if (loadedUserIdRef.current === userId) return;
-        loadedUserIdRef.current = userId;
 
         let isMounted = true;
         getUserBookmarkedProductIdsAction()
